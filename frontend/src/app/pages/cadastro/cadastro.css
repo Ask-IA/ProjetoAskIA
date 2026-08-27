@@ -1,0 +1,177 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  background-color: var(--deep);
+  color: var(--ink);
+}
+
+.page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 24px;
+  background:
+    radial-gradient(circle at 80% 8%, rgba(18, 124, 240, 0.28), transparent 25rem),
+    radial-gradient(circle at 10% 60%, rgba(21, 67, 174, 0.26), transparent 32rem);
+}
+
+.login-card {
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: linear-gradient(165deg, rgba(24, 22, 61, 0.92), rgba(9, 11, 32, 0.94));
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 32px 34px 26px;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(14px);
+}
+
+.logo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.logo-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: rgba(98, 201, 255, 0.14);
+  color: var(--electric);
+  border: 1px solid var(--line);
+}
+
+.logo-text {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+}
+
+.card-title {
+  margin: 4px 0 18px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.login-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field label {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.field input {
+  width: 100%;
+  height: 38px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(98, 201, 255, 0.55);
+  background: rgba(5, 13, 36, 0.6);
+  color: var(--ink);
+  font-size: 14px;
+  outline: none;
+  transition: border-color .2s ease, box-shadow .2s ease;
+}
+
+.field input::placeholder {
+  color: var(--muted);
+}
+
+.field input:focus {
+  border-color: var(--electric);
+  box-shadow: 0 0 0 3px rgba(98, 201, 255, 0.18);
+}
+
+.error-message {
+  font-size: 12px;
+  color: #ff8080;
+  margin: -4px 0 0;
+}
+
+.btn-primary {
+  margin-top: 4px;
+  height: 40px;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(120deg, #62c9ff, #3b9dff);
+  color: #04101f;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: filter .2s ease, transform .2s ease;
+}
+
+.btn-primary:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+.signup-text {
+  margin: 10px 0 0;
+  text-align: center;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.signup-text a {
+  color: var(--electric);
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.signup-text a:hover {
+  text-decoration: underline;
+}
+
+.btn-google {
+  width: 100%;
+  max-width: 400px;
+  margin-top: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 40px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: #f4f6f8;
+  color: #1f2430;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter .2s ease;
+}
+
+.btn-google:hover {
+  filter: brightness(0.97);
+}
+
+.google-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}

@@ -1,0 +1,22 @@
+# Node / Angular
+**/node_modules/
+**/dist/
+**/.angular/
+
+# Java / Maven
+**/target/
+*.class
+
+# Ambiente
+.env
+**/application-local.properties
+
+# IDE
+.idea/
+*.iml
+.vscode/*
+!.vscode/settings.json
+
+# SO
+.DS_Store
+Thumbs.db

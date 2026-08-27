@@ -1,0 +1,91 @@
+/* styles.css - só o essencial */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap');
+
+:root {
+  --ink: #eaf4ff;
+  --muted: #aac2de;
+  --line: rgba(143, 211, 255, 0.16);
+  --deep: #050d24;
+  --panel: rgba(10, 30, 69, 0.68);
+  --electric: #62c9ff;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: "DM Sans", sans-serif;
+  min-height: 100vh;
+}
+
+app-header, app-landing {
+  display: block;
+  width: 100%;
+}
+
+/* ---- Classes de design compartilhadas entre componentes ---- */
+
+.page-shell {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 81% 5%, rgba(18, 124, 240, 0.35), transparent 25rem),
+    radial-gradient(circle at 8% 53%, rgba(21, 67, 174, 0.31), transparent 32rem);
+}
+
+.grid-noise {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.34;
+  background-image:
+    linear-gradient(rgba(130, 201, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(130, 201, 255, 0.05) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: linear-gradient(to bottom, black, transparent 72%);
+}
+
+.heading-font { font-family: "Fraunces", serif; }
+
+.glass {
+  background: rgba(7, 22, 53, 0.64);
+  border: 1px solid var(--line);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.23);
+  backdrop-filter: blur(16px);
+}
+
+.eyebrow-dot {
+  box-shadow: 0 0 0 5px rgba(98, 201, 255, 0.12), 0 0 18px #62c9ff;
+}
+
+.hero-copy, .hero-visual, .feature-card, .ai-copy, .ai-visual, .closing-panel {
+  animation: rise-in 0.8s both cubic-bezier(.2, .8, .2, 1);
+}
+
+.hero-visual { animation-delay: .14s; }
+
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(22px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.orbit {
+  animation: drift 5s ease-in-out infinite;
+}
+
+@keyframes drift {
+  50% { transform: translateY(-10px); }
+}
+
+.feature-card {
+  transition: transform .25s ease, border-color .25s ease, box-shadow .25s ease;
+}
+
+.feature-card:hover {
+  transform: translateY(-7px);
+  border-color: rgba(116, 211, 255, 0.48);
+  box-shadow: 0 24px 44px rgba(0, 7, 26, 0.35);
+}

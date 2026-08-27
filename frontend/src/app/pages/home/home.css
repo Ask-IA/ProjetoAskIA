@@ -1,0 +1,7 @@
+/* home.css e login.css (tema escuro) */
+:host {
+  display: block;
+  min-height: 100vh;
+  background-color: var(--deep);
+  color: var(--ink);
+}
