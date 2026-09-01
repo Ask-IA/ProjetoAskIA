@@ -16,21 +16,20 @@
       </span>
       <span class="logo-text">Ask.IA</span>
     </div>
+<form id="login-form" class="login-form" novalidate [formGroup]="form" (ngSubmit)="onSubmit()">
+  <div class="field">
+    <label for="email">Informe o E-mail</label>
+    <input type="email" id="email" formControlName="email" autocomplete="username" required />
+  </div>
 
-    <form id="login-form" class="login-form" novalidate>
-      <div class="field">
-        <label for="username">Informe o Usuário</label>
-        <input type="text" id="username" name="username" autocomplete="username" required />
-      </div>
+  <div class="field">
+    <label for="password">Informe a Senha</label>
+    <input type="password" id="password" formControlName="password" autocomplete="current-password" required />
+  </div>
 
-      <div class="field">
-        <label for="password">Informe a Senha</label>
-        <input type="password" id="password" name="password" autocomplete="current-password" required />
-      </div>
+  <p id="error-message" class="error-message" *ngIf="errorMessage">{{ errorMessage }}</p>
 
-      <p id="error-message" class="error-message" hidden></p>
-
-      <button type="submit" class="btn-primary">Entrar</button>
+  <button type="submit" class="btn-primary" [disabled]="loading">{{ loading ? 'Entrando...' : 'Entrar' }}</button>
 
       <p class="signup-text">
         Não possui um login?
