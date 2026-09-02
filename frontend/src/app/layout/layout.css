@@ -1,0 +1,163 @@
+/* src/app/layout/layout.css
+   Escrito primeiro para 360px e depois ampliado para o desktop.
+   O Figma foi desenhado só para desktop, mas o público usa celular. */
+
+.casca {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---------- CELULAR: barra fixa embaixo ---------- */
+
+.menu {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  height: var(--altura-barra-celular);
+  background: linear-gradient(180deg, var(--sidebar-de), var(--sidebar-para));
+  border-top: 1px solid rgba(255, 255, 255, .08);
+}
+
+/* No celular a marca não cabe na barra */
+.marca {
+  display: none;
+}
+
+.lista {
+  display: flex;
+  justify-content: space-around;
+  align-items: stretch;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow-x: auto;
+}
+
+.lista a {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  /* mínimo de 44px de área de toque */
+  min-width: 56px;
+  height: 100%;
+  padding: 0 6px;
+  color: var(--texto-menu);
+  text-decoration: none;
+  font-size: .68rem;
+  white-space: nowrap;
+  transition: color .15s;
+}
+
+.icone {
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+.lista a.ativo {
+  color: #fff;
+  /* Item ativo não depende só de cor: ganha uma barra.
+     Requisito de acessibilidade nº 5 do caderno de IHC. */
+  box-shadow: inset 0 3px 0 var(--acento-claro);
+}
+
+.lista a:hover {
+  color: #fff;
+}
+
+.conteudo {
+  flex: 1;
+  padding: 16px;
+  /* espaço para a barra fixa não cobrir o conteúdo */
+  padding-bottom: calc(var(--altura-barra-celular) + 16px);
+  background: var(--fundo);
+}
+
+/* ---------- DESKTOP: barra lateral à esquerda ---------- */
+
+@media (min-width: 768px) {
+
+  .casca {
+    flex-direction: row;
+  }
+
+  .menu {
+    position: sticky;
+    top: 0;
+    bottom: auto;
+    right: auto;
+    width: var(--largura-menu);
+    height: 100dvh;
+    flex-shrink: 0;
+    padding: 20px 12px;
+    border-top: none;
+    background: linear-gradient(160deg, var(--sidebar-de), var(--sidebar-para));
+  }
+
+  .marca {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 28px;
+    padding: 0 8px;
+    color: #fff;
+  }
+
+  .marca-icone {
+    font-size: 1.4rem;
+  }
+
+  .marca-nome {
+    font-weight: 600;
+    letter-spacing: .2px;
+  }
+
+  .lista {
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 2px;
+    height: auto;
+    overflow: visible;
+  }
+
+  .lista a {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 10px;
+    width: 100%;
+    min-width: 0;
+    height: auto;
+    padding: 10px 12px;
+    border-radius: var(--raio);
+    font-size: .9rem;
+  }
+
+  .lista a.ativo {
+    background: var(--acento);
+    color: #fff;
+    box-shadow: none;
+  }
+
+  .lista a:hover:not(.ativo) {
+    background: rgba(255, 255, 255, .06);
+  }
+
+  .conteudo {
+    padding: 32px;
+    padding-bottom: 32px;
+    overflow-y: auto;
+  }
+
+}
+
+/* Respeita quem desativou animações no sistema */
+@media (prefers-reduced-motion: reduce) {
+  .lista a {
+    transition: none;
+  }
+}

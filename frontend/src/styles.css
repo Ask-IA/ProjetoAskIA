@@ -89,3 +89,45 @@ app-header, app-landing {
   border-color: rgba(116, 211, 255, 0.48);
   box-shadow: 0 24px 44px rgba(0, 7, 26, 0.35);
 }
+
+:root {
+  /* Menu lateral — gradiente do Figma novo */
+  --sidebar-de: #0D0D14;
+  --sidebar-para: #1E1E3A;
+ 
+  /* Área de conteúdo */
+  --fundo: #E8E8E8;
+  --cartao: #FFFFFF;
+ 
+  /* Ações */
+  --acento: #1D4ED8;
+  --acento-hover: #1E40AF;
+ 
+  /* Reaproveita o ciano que já existe no projeto,
+     em vez de introduzir um segundo tom parecido. */
+  --acento-claro: var(--electric);
+ 
+  /* Texto sobre fundo claro (a área logada é clara;
+     a home é escura e continua usando --ink e --muted) */
+  --texto: #111827;
+  --texto-suave: #6B7280;
+  --texto-menu: #9CA3AF;
+ 
+  /* Estado */
+  --sucesso: #16A34A;
+  --erro: #DC2626;
+  --alerta: #F59E0B;
+ 
+  /* Medidas */
+  --largura-menu: 200px;
+  --altura-barra-celular: 64px;
+  --raio: 10px;
+  --sombra: 0 1px 3px rgba(0, 0, 0, .1);
+}
+ 
+/* Foco visível para navegação por teclado.
+   Requisito de acessibilidade nº 2 do caderno de IHC. */
+:focus-visible {
+  outline: 2px solid var(--acento-claro);
+  outline-offset: 2px;
+}

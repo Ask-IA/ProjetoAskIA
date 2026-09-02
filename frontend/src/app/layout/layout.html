@@ -1,0 +1,36 @@
+<!-- src/app/layout/layout.html -->
+
+<div class="casca">
+
+  <!-- Menu: barra lateral no desktop, barra inferior no celular -->
+  <nav class="menu" aria-label="Navegação principal">
+
+    <div class="marca">
+      <span class="marca-icone" aria-hidden="true">◉</span>
+      <span class="marca-nome">Ask.IA</span>
+    </div>
+
+    <ul class="lista">
+      @for (item of itens; track item.rota) {
+        <li>
+          <a
+            [routerLink]="item.rota"
+            routerLinkActive="ativo"
+            #rla="routerLinkActive"
+            [attr.aria-current]="rla.isActive ? 'page' : null"
+          >
+            <span class="icone" aria-hidden="true">{{ item.icone }}</span>
+            <span class="rotulo">{{ item.rotulo }}</span>
+          </a>
+        </li>
+      }
+    </ul>
+
+  </nav>
+
+  <!-- Cada seção é renderizada aqui -->
+  <main class="conteudo">
+    <router-outlet />
+  </main>
+
+</div>
