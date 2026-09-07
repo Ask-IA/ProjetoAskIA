@@ -1,4 +1,4 @@
-# --- Etapa 1: build (instala deps e gera o dist/) ---
+# --- Etapa 1: build ---
 FROM node:22-alpine AS build
 WORKDIR /app
 
@@ -8,12 +8,12 @@ RUN npm ci
 COPY . .
 RUN npm run build
 
-# --- Etapa 2: runtime (só o necessário pra rodar o servidor SSR) ---
+# --- Etapa 2: runtime (servidor SSR) ---
 FROM node:22-alpine
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-RUN npm ci --omit=dev
+RUN npm ci
 
 COPY --from=build /app/dist ./dist
 
