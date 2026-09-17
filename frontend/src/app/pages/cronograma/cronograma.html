@@ -1,0 +1,116 @@
+<!-- src/app/pages/cronograma/cronograma.html -->
+
+<h1 class="pagina-titulo">Cronograma</h1>
+<p class="pagina-sub">Organize seu plano de estudos por dia e registre suas sessões.</p>
+
+<div class="duas-colunas">
+
+  <div class="coluna-formularios">
+
+    <!-- Adicionar meta -->
+    <div class="cartao-app">
+      <h2 class="secao-titulo">Adicione uma meta</h2>
+
+      <div class="campo-app">
+        <label for="meta-materia">Matéria</label>
+        <select id="meta-materia" name="metaMateria" [(ngModel)]="metaMateriaId">
+          <option [ngValue]="null" disabled>Selecione uma matéria...</option>
+          @for (materia of materias; track materia.id) {
+            <option [ngValue]="materia.id">{{ materia.nome }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="linha-dupla">
+        <div class="campo-app">
+          <label for="meta-dia">Dia</label>
+          <select id="meta-dia" name="metaDia" [(ngModel)]="metaDia">
+            @for (dia of dias; track dia) {
+              <option [ngValue]="dia">{{ dia }}</option>
+            }
+          </select>
+        </div>
+        <div class="campo-app">
+          <label for="meta-hora">Hora</label>
+          <input id="meta-hora" name="metaHora" type="time" [(ngModel)]="metaHora" />
+        </div>
+      </div>
+
+      <div class="campo-app">
+        <label for="meta-desc">Descrição (opcional)</label>
+        <input id="meta-desc" name="metaDescricao" placeholder="Ex: revisar uma matéria" [(ngModel)]="metaDescricao" />
+      </div>
+
+      <button type="button" class="btn-acento" (click)="adicionarMeta()"
+              [disabled]="metaMateriaId === null || !metaHora">
+        Adicionar
+      </button>
+    </div>
+
+    <!-- Registrar sessão -->
+    <div class="cartao-app">
+      <h2 class="secao-titulo">Registrar sessão</h2>
+
+      <div class="campo-app">
+        <label for="sessao-materia">Matéria</label>
+        <select id="sessao-materia" name="sessaoMateria" [(ngModel)]="sessaoMateriaId">
+          <option [ngValue]="null" disabled>Selecione uma matéria...</option>
+          @for (materia of materias; track materia.id) {
+            <option [ngValue]="materia.id">{{ materia.nome }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="campo-app">
+        <label for="sessao-min">Minutos estudados</label>
+        <input id="sessao-min" name="sessaoMinutos" type="number" min="1" [(ngModel)]="sessaoMinutos" />
+      </div>
+
+      <div class="campo-app">
+        <label for="sessao-notas">Anotações (opcional)</label>
+        <input id="sessao-notas" name="sessaoAnotacoes" [(ngModel)]="sessaoAnotacoes" />
+      </div>
+
+      <button type="button" class="btn-acento" (click)="registrarSessao()"
+              [disabled]="sessaoMateriaId === null || sessaoMinutos <= 0">
+        Registrar
+      </button>
+    </div>
+  </div>
+
+  <!-- Semana + sessões recentes -->
+  <div class="coluna-semana">
+    @for (dia of dias; track dia) {
+      <div class="cartao-app cartao-dia">
+        <div class="dia-topo">
+          <strong>📅 {{ dia }}</strong>
+          <small>{{ metasDoDia(dia).length }} metas</small>
+        </div>
+        @for (meta of metasDoDia(dia); track meta.id) {
+          <div class="meta">
+            <span>
+              <strong>{{ meta.hora }}</strong> — {{ nomeMateria(meta.materiaId) }}
+              @if (meta.descricao) { <em>· {{ meta.descricao }}</em> }
+            </span>
+            <button type="button" class="remover" (click)="removerMeta(meta.id)"
+                    aria-label="Remover meta">✕</button>
+          </div>
+        } @empty {
+          <p class="sem-metas">Sem metas para esse dia.</p>
+        }
+      </div>
+    }
+
+    <div class="cartao-app">
+      <strong class="secao-titulo">Sessões recentes</strong>
+      @for (sessao of sessoes; track sessao.id) {
+        <div class="sessao">
+          <span>{{ nomeMateria(sessao.materiaId) }} — {{ sessao.minutos }}min</span>
+          <small>{{ sessao.data | date:'dd/MM' }}</small>
+        </div>
+      } @empty {
+        <p class="sem-metas">Nenhuma sessão registrada ainda.</p>
+      }
+    </div>
+  </div>
+</div>

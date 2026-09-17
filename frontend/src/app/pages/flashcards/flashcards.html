@@ -1,0 +1,35 @@
+<!-- src/app/pages/flashcards/flashcards.html -->
+
+<h1 class="pagina-titulo">Flashcards</h1>
+<p class="pagina-sub">Revise os conceitos em cartões — vire, responda e acompanhe seus acertos.</p>
+
+@if (carregando) {
+  <p class="aviso">Carregando seus cartões...</p>
+} @else if (terminou) {
+  <div class="cartao-app resumo">
+    <h2>Revisão concluída! 🎉</h2>
+    <p>
+      Você acertou <strong class="ok">{{ acertos }}</strong> e errou
+      <strong class="ruim">{{ erros }}</strong> de {{ cartoes.length }} cartões.
+    </p>
+    <button type="button" class="btn-acento" (click)="reiniciar()">Revisar de novo</button>
+  </div>
+} @else if (atual) {
+  <div class="area">
+    <div class="progresso-cartoes">Cartão {{ indice + 1 }} de {{ cartoes.length }}</div>
+
+    <button type="button" class="cartao-app carta" (click)="virar()"
+            [attr.aria-label]="virado ? 'Ver pergunta' : 'Ver resposta'">
+      <small class="materia">{{ atual.materia }}</small>
+      <p class="conteudo">{{ virado ? atual.verso : atual.frente }}</p>
+      <small class="dica">{{ virado ? 'Clique para voltar' : 'Clique para virar' }}</small>
+    </button>
+
+    @if (virado) {
+      <div class="acoes">
+        <button type="button" class="btn-resposta errei" (click)="responder(false)">Errei</button>
+        <button type="button" class="btn-resposta acertei" (click)="responder(true)">Acertei</button>
+      </div>
+    }
+  </div>
+}

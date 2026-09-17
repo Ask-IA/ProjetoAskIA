@@ -26,6 +26,11 @@
       }
     </ul>
 
+    <button type="button" class="sair" (click)="sair()" [disabled]="saindo">
+      <span class="icone" aria-hidden="true">⎋</span>
+      <span class="rotulo">{{ saindo ? 'Saindo...' : 'Sair' }}</span>
+    </button>
+
   </nav>
 
   <!-- Cada seção é renderizada aqui -->

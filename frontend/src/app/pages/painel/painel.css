@@ -1,0 +1,57 @@
+/* src/app/pages/painel/painel.css */
+
+.topo { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
+.atalho-ask { text-decoration: none; display: inline-block; }
+
+.carregando { color: var(--texto-suave); }
+
+.cartoes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 14px;
+  margin-bottom: 18px;
+}
+.metrica { display: flex; flex-direction: column; gap: 4px; }
+.metrica-rotulo { color: var(--texto-suave); font-size: .85rem; }
+.metrica strong { font-size: 1.7rem; color: var(--texto); }
+.metrica small { color: var(--texto-suave); }
+
+.linha-meio {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+@media (max-width: 760px) { .linha-meio { grid-template-columns: 1fr; } }
+
+.grafico-titulo { color: var(--texto-suave); font-size: .85rem; }
+.barras {
+  display: flex; align-items: flex-end; gap: 10px;
+  height: 160px; margin-top: 16px;
+}
+.coluna { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; }
+.valor { font-size: .75rem; color: var(--texto-suave); }
+.barra {
+  width: 100%; max-width: 34px; min-height: 2px;
+  background: var(--acento); border-radius: 6px 6px 0 0;
+  transition: height .4s ease;
+}
+.dia { font-size: .72rem; color: var(--texto-suave); }
+
+.destaques { display: flex; flex-direction: column; gap: 14px; }
+.destaque { display: flex; flex-direction: column; gap: 6px; }
+.destaque span { color: var(--texto); font-weight: 600; }
+.destaque strong { font-size: 1.2rem; }
+.destaque em { font-style: normal; font-weight: 700; }
+.positivo { color: var(--sucesso); }
+.negativo { color: var(--erro); }
+.destaque strong.positivo, .destaque strong.negativo { color: var(--texto); }
+
+.atalhos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+}
+.atalho { display: flex; flex-direction: column; gap: 12px; align-items: flex-start; }
+.atalho span { color: var(--texto); font-weight: 600; }
+.atalho a { text-decoration: none; }

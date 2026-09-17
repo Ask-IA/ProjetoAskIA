@@ -131,3 +131,83 @@ app-header, app-landing {
   outline: 2px solid var(--acento-claro);
   outline-offset: 2px;
 }
+/* ---- Área logada: classes compartilhadas entre as sete seções ----
+   Mantidas aqui para cada tela não repetir o mesmo CSS
+   (e para respeitar o budget de estilo por componente do Angular). */
+
+.pagina-titulo {
+  margin: 0 0 4px;
+  color: var(--texto);
+  font-size: 1.7rem;
+}
+
+.pagina-sub {
+  margin: 0 0 24px;
+  color: var(--texto-suave);
+}
+
+.cartao-app {
+  background: var(--cartao);
+  border-radius: var(--raio);
+  box-shadow: var(--sombra);
+  padding: 20px;
+}
+
+.btn-acento {
+  background: var(--acento);
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  padding: 10px 22px;
+  font-weight: 600;
+  font-family: inherit;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background .2s ease;
+}
+.btn-acento:hover:not(:disabled) { background: var(--acento-hover); }
+.btn-acento:disabled { opacity: .55; cursor: not-allowed; }
+
+.btn-claro {
+  background: var(--acento-claro);
+  color: #06283D;
+  border: none;
+  border-radius: 999px;
+  padding: 10px 22px;
+  font-weight: 600;
+  font-family: inherit;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.campo-app {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+.campo-app label {
+  color: var(--texto-suave);
+  font-size: .88rem;
+  font-weight: 500;
+}
+.campo-app input,
+.campo-app select,
+.campo-app textarea {
+  border: 1px solid #D1D5DB;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-family: inherit;
+  font-size: .95rem;
+  color: var(--texto);
+  background: #fff;
+}
+
+.msg-erro-app {
+  color: var(--erro);
+  background: rgba(220, 38, 38, .08);
+  border: 1px solid rgba(220, 38, 38, .25);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: .9rem;
+}

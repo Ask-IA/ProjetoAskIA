@@ -1,0 +1,94 @@
+<!-- src/app/pages/materias/materias.html -->
+
+<h1 class="pagina-titulo">Suas Matérias</h1>
+<p class="pagina-sub">Cadastre sua matéria aqui e organize os tópicos</p>
+
+<div class="duas-colunas">
+
+  <!-- Lista de matérias -->
+  <div class="coluna-lista">
+    <form class="form-linha" (ngSubmit)="adicionarMateria()">
+      <input
+        name="novaMateria"
+        placeholder="Nova matéria (ex: Química)"
+        [(ngModel)]="novaMateria"
+      />
+      <button type="submit" class="btn-claro">Adicionar</button>
+    </form>
+
+    @for (materia of materias; track materia.id) {
+      <button
+        type="button"
+        class="cartao-app item-materia"
+        [class.selecionada]="materia.id === selecionada?.id"
+        (click)="selecionar(materia)"
+      >
+        <span class="pilula" [style.background]="materia.cor"></span>
+        <span class="info">
+          <strong>{{ materia.nome }}</strong>
+          <small>{{ materia.topicos.length }} tópicos</small>
+        </span>
+        <span aria-hidden="true">›</span>
+      </button>
+    }
+  </div>
+
+  <!-- Detalhe da matéria selecionada -->
+  <div class="cartao-app coluna-detalhe">
+    @if (!selecionada) {
+      <p class="vazio">Selecione ou cadastre uma matéria para começar.</p>
+    } @else {
+      <h2>
+        <span class="pilula" [style.background]="selecionada.cor"></span>
+        {{ selecionada.nome }}
+      </h2>
+
+      <form class="form-linha" (ngSubmit)="adicionarTopico()">
+        <input
+          name="novoTopico"
+          placeholder="Adicione um tópico (ex: equação)"
+          [(ngModel)]="novoTopico"
+        />
+        <button type="submit" class="btn-claro">Adicionar</button>
+      </form>
+
+      @for (topico of selecionada.topicos; track topico.id) {
+        <div class="topico">
+          <label>
+            <input
+              type="checkbox"
+              [checked]="topico.concluido"
+              (change)="alternarTopico(topico.id)"
+            />
+            <span [class.feito]="topico.concluido">
+              {{ topico.nome }}
+              <small>{{ topico.concluido ? 'Concluído' : 'Pendente' }}</small>
+            </span>
+          </label>
+          <button
+            type="button"
+            class="remover"
+            (click)="removerTopico(topico.id)"
+            attr.aria-label="Remover tópico {{ topico.nome }}"
+          >🗑</button>
+        </div>
+      } @empty {
+        <p class="vazio">Nenhum tópico ainda — adicione o primeiro acima.</p>
+      }
+
+      <!-- Temporizador de Estudos -->
+      <div class="temporizador">
+        <h3>Temporizador de Estudos</h3>
+        <div class="mostrador">{{ tempoFormatado }}</div>
+        <div class="controles">
+          @if (!rodando) {
+            <button type="button" class="btn-acento" (click)="comecar()">Começar</button>
+          } @else {
+            <button type="button" class="btn-acento" (click)="pausar()">Pausar</button>
+          }
+          <button type="button" class="btn-claro" (click)="zerar()">Zerar</button>
+        </div>
+      </div>
+    }
+  </div>
+</div>

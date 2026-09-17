@@ -1,0 +1,67 @@
+<!-- src/app/pages/quiz/quiz.html -->
+
+<h1 class="pagina-titulo">Quiz IA</h1>
+<p class="pagina-sub">Monte um quiz da matéria que quiser e teste o que você sabe.</p>
+
+@if (questoes.length === 0 && !gerando) {
+  <div class="cartao-app inicio">
+    <div class="campo-app">
+      <label for="quiz-materia">Matéria</label>
+      <select id="quiz-materia" name="materia" [(ngModel)]="materiaEscolhida">
+        <option [ngValue]="null" disabled>Selecione uma matéria...</option>
+        @for (materia of materias; track materia) {
+          <option [ngValue]="materia">{{ materia }}</option>
+        }
+      </select>
+    </div>
+    <button type="button" class="btn-acento" (click)="gerar()" [disabled]="!materiaEscolhida">
+      Gerar Quiz
+    </button>
+  </div>
+} @else if (gerando) {
+  <div class="cartao-app gerando">
+    <p>A IA está montando seu quiz de <strong>{{ materiaEscolhida }}</strong>...</p>
+    <div class="pontos"><span></span><span></span><span></span></div>
+  </div>
+} @else if (terminou) {
+  <div class="cartao-app final">
+    <h2>Resultado</h2>
+    <p class="nota">{{ acertos }} / {{ questoes.length }}</p>
+    <p class="comentario">
+      {{ acertos >= questoes.length * 0.7 ? 'Mandou bem! 🎯' : 'Vale revisar essa matéria nos flashcards. 💪' }}
+    </p>
+    <button type="button" class="btn-acento" (click)="refazer()">Fazer outro quiz</button>
+  </div>
+} @else if (atual) {
+  <div class="cartao-app questao">
+    <small class="contagem">Questão {{ indice + 1 }} de {{ questoes.length }} — {{ materiaEscolhida }}</small>
+    <h2>{{ atual.enunciado }}</h2>
+
+    <div class="alternativas">
+      @for (alternativa of atual.alternativas; track $index) {
+        <button
+          type="button"
+          class="alternativa"
+          [class.selecionada]="respostaSelecionada === $index && !respondida"
+          [class.correta]="respondida && $index === atual.correta"
+          [class.errada]="respondida && respostaSelecionada === $index && $index !== atual.correta"
+          [disabled]="respondida"
+          (click)="respostaSelecionada = $index"
+        >
+          {{ alternativa }}
+        </button>
+      }
+    </div>
+
+    @if (!respondida) {
+      <button type="button" class="btn-acento" (click)="confirmar()"
+              [disabled]="respostaSelecionada === null">
+        Confirmar
+      </button>
+    } @else {
+      <button type="button" class="btn-acento" (click)="proxima()">
+        {{ indice + 1 >= questoes.length ? 'Ver resultado' : 'Próxima' }}
+      </button>
+    }
+  </div>
+}
