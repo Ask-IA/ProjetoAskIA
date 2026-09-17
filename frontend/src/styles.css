@@ -211,3 +211,15 @@ app-header, app-landing {
   padding: 10px 14px;
   font-size: .9rem;
 }
+
+/* ---- Rolagem suave para os links de âncora da landing
+       (Recursos, Como Funciona, Sobre e o botão "Ver Como Funciona").
+       O scroll-margin evita que o título da seção encoste no topo da tela. ---- */
+html { scroll-behavior: smooth; }
+
+#inicio, #recursos, #como-funciona, #sobre, #comecar { scroll-margin-top: 90px; }
+
+/* Respeita quem configurou o sistema para reduzir animações. */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+}

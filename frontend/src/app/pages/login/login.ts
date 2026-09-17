@@ -15,6 +15,7 @@ export class Login {
   form: FormGroup;
   errorMessage = '';
   loading = false;
+  mostrarSenha = false; // controla o "olhinho" do campo de senha
 
   constructor(
     private fb: FormBuilder,

@@ -1,0 +1,30 @@
+
+/* ---- Carrossel de recursos ---- */
+
+.carrossel {
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;            /* Firefox */
+  -ms-overflow-style: none;         /* Edge antigo */
+}
+.carrossel::-webkit-scrollbar { display: none; }  /* Chrome/Safari */
+
+.carrossel .cartao {
+  scroll-snap-align: start;
+  width: 88%;
+}
+@media (min-width: 768px)  { .carrossel .cartao { width: calc((100% - 1.25rem) / 2); } }
+@media (min-width: 1024px) { .carrossel .cartao { width: calc((100% - 2.5rem) / 3); } }
+
+.seta:disabled { opacity: .35; cursor: not-allowed; }
+
+.bolinha {
+  width: 8px;
+  background: rgba(186, 230, 253, .28);
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+.bolinha.ativa {
+  width: 26px;
+  background: rgb(125, 211, 252);
+}

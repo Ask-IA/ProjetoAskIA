@@ -134,3 +134,41 @@
   text-decoration: underline;
 }
 
+
+/* ---- Campo de senha com o botão "olhinho" ----
+   O input ganha espaço à direita para o botão não cobrir o texto digitado.
+   A cor do ícone usa --electric (azul claro) para ficar visível no fundo escuro. */
+.campo-senha {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.campo-senha input {
+  padding-right: 40px;
+}
+.olhinho {
+  position: absolute;
+  right: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--electric);
+  cursor: pointer;
+  transition: background .15s ease;
+}
+.olhinho:hover { background: rgba(98, 201, 255, 0.15); }
+.olhinho:focus-visible { outline: 2px solid var(--electric); outline-offset: 1px; }
+
+/* ---- Dica de senha abaixo do campo (cadastro) ---- */
+.dica-senha {
+  font-size: 12px;
+  margin: 0;
+  color: var(--muted);
+}
+.dica-senha.invalida { color: #ff8080; }
+.dica-senha.valida   { color: #7ee2a8; }
