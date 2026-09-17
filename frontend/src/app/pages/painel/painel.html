@@ -1,0 +1,84 @@
+<!-- src/app/pages/painel/painel.html -->
+
+<div class="topo">
+  <div>
+    <h1 class="pagina-titulo">Olá, estudante!</h1>
+    <p class="pagina-sub">Veja seu progresso diário.</p>
+  </div>
+  <a routerLink="/app/ask" class="btn-acento atalho-ask">Pergunte ao Ask IA</a>
+</div>
+
+@if (!resumo) {
+  <p class="carregando">Carregando seu painel...</p>
+} @else {
+
+  <div class="cartoes">
+    <div class="cartao-app metrica">
+      <span class="metrica-rotulo">Tempo Total</span>
+      <strong>{{ resumo.minutosTotais }}min</strong>
+      <small>acumulado</small>
+    </div>
+    <div class="cartao-app metrica">
+      <span class="metrica-rotulo">Semana</span>
+      <strong>{{ resumo.minutosSemana }}min</strong>
+      <small>últimos 7 dias</small>
+    </div>
+    <div class="cartao-app metrica">
+      <span class="metrica-rotulo">Tópicos Concluídos</span>
+      <strong>{{ resumo.topicosConcluidos }}</strong>
+      <small>{{ resumo.topicosConcluidos }} tópicos</small>
+    </div>
+    <div class="cartao-app metrica">
+      <span class="metrica-rotulo">Matérias</span>
+      <strong>{{ resumo.totalMaterias }}</strong>
+      <small>{{ resumo.totalMaterias }} matérias</small>
+    </div>
+  </div>
+
+  <div class="linha-meio">
+    <div class="cartao-app grafico">
+      <span class="grafico-titulo">Últimos 7 dias — minutos estudados por dia</span>
+      <div class="barras">
+        @for (dia of resumo.minutosPorDia; track dia.rotulo) {
+          <div class="coluna">
+            <span class="valor">{{ dia.minutos > 0 ? dia.minutos : '' }}</span>
+            <div class="barra" [style.height.%]="alturaBarra(dia.minutos)"></div>
+            <span class="dia">{{ dia.rotulo }}</span>
+          </div>
+        }
+      </div>
+    </div>
+
+    <div class="destaques">
+      <div class="cartao-app destaque">
+        <span>Matéria com maior desempenho</span>
+        @if (resumo.maiorDesempenho) {
+          <strong class="positivo">{{ resumo.maiorDesempenho.materia }}</strong>
+          <em class="positivo">{{ resumo.maiorDesempenho.percentual }}%</em>
+        } @else { <strong>—</strong> }
+      </div>
+      <div class="cartao-app destaque">
+        <span>Matéria com menor desempenho</span>
+        @if (resumo.menorDesempenho) {
+          <strong class="negativo">{{ resumo.menorDesempenho.materia }}</strong>
+          <em class="negativo">{{ resumo.menorDesempenho.percentual }}%</em>
+        } @else { <strong>—</strong> }
+      </div>
+    </div>
+  </div>
+
+  <div class="atalhos">
+    <div class="cartao-app atalho">
+      <span>Verifique as suas matérias</span>
+      <a routerLink="/app/materias" class="btn-acento">Matérias</a>
+    </div>
+    <div class="cartao-app atalho">
+      <span>Verifique o seu progresso</span>
+      <a routerLink="/app/progresso" class="btn-acento">Progresso</a>
+    </div>
+    <div class="cartao-app atalho">
+      <span>Monte seu Quiz</span>
+      <a routerLink="/app/quiz" class="btn-acento">Quiz IA</a>
+    </div>
+  </div>
+}

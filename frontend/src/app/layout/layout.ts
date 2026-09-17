@@ -3,9 +3,10 @@
 // Esqueleto compartilhado pelas sete seções da aplicação.
 // O menu fica aqui; cada seção entra pelo <router-outlet> como filha.
 
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { AuthService } from '../services/auth.service';
 
 interface ItemMenu {
   rotulo: string;
@@ -21,6 +22,11 @@ interface ItemMenu {
   styleUrl: './layout.css',
 })
 export class Layout {
+  private auth = inject(AuthService);
+  private router = inject(Router);
+
+  saindo = false;
+
   // Ask IA vem primeiro: a ordem do menu comunica a prioridade do produto.
   itens: ItemMenu[] = [
     { rotulo: 'Ask IA',     rota: '/app/ask',        icone: '✦' },
@@ -31,4 +37,20 @@ export class Layout {
     { rotulo: 'Quiz IA',    rota: '/app/quiz',       icone: '◔' },
     { rotulo: 'Progresso',  rota: '/app/progresso',  icone: '◈' },
   ];
+
+  sair(): void {
+    if (this.saindo) return;
+    this.saindo = true;
+    this.auth.logout().subscribe({
+      // Mesmo se o backend falhar, o usuário volta para o login:
+      // a pior experiência seria clicar em "Sair" e nada acontecer.
+      next: () => this.irParaLogin(),
+      error: () => this.irParaLogin(),
+    });
+  }
+
+  private irParaLogin(): void {
+    this.saindo = false;
+    this.router.navigateByUrl('/login');
+  }
 }

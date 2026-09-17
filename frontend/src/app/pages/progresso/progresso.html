@@ -1,0 +1,61 @@
+<!-- src/app/pages/progresso/progresso.html -->
+
+<h1 class="pagina-titulo">Progresso</h1>
+<p class="pagina-sub">Acompanhe sua evolução por matéria e mantenha a sequência de estudos.</p>
+
+@if (carregando) {
+  <p class="aviso">Carregando seu progresso...</p>
+} @else {
+
+  <div class="cartoes-topo">
+    <div class="cartao-app ofensiva">
+      <span class="fogo" aria-hidden="true">🔥</span>
+      <div>
+        <strong>{{ ofensiva }} {{ ofensiva === 1 ? 'dia' : 'dias' }} seguidos</strong>
+        <small>estudando sem falhar</small>
+      </div>
+    </div>
+    <div class="cartao-app ofensiva">
+      <span class="fogo" aria-hidden="true">⏱</span>
+      <div>
+        <strong>{{ totalMinutos }} minutos</strong>
+        <small>registrados no total</small>
+      </div>
+    </div>
+  </div>
+
+  <div class="cartao-app">
+    <h2 class="secao">Domínio por matéria</h2>
+    <p class="explica">Percentual de tópicos concluídos em cada matéria.</p>
+
+    @for (item of desempenhos; track item.materia) {
+      <div class="linha-materia">
+        <div class="rotulo">
+          <span class="pilula" [style.background]="item.cor"></span>
+          <span>{{ item.materia }}</span>
+          <strong>{{ item.percentual }}%</strong>
+        </div>
+        <div class="trilha">
+          <div class="preenchido" [style.width.%]="item.percentual" [style.background]="item.cor"></div>
+        </div>
+      </div>
+    }
+  </div>
+
+  <div class="cartao-app">
+    <h2 class="secao">Minutos estudados por matéria</h2>
+
+    @for (item of desempenhos; track item.materia) {
+      <div class="linha-materia">
+        <div class="rotulo">
+          <span class="pilula" [style.background]="item.cor"></span>
+          <span>{{ item.materia }}</span>
+          <strong>{{ item.minutos }}min</strong>
+        </div>
+        <div class="trilha">
+          <div class="preenchido" [style.width.%]="larguraMinutos(item.minutos)" [style.background]="item.cor"></div>
+        </div>
+      </div>
+    }
+  </div>
+}

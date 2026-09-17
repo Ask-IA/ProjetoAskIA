@@ -1,0 +1,3 @@
+# SPA: qualquer rota (ex.: /app/ask digitada direto) devolve o index.html
+# e o Angular Router assume a navegação no navegador.
+/*  /index.html  200

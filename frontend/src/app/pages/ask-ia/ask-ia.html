@@ -1,0 +1,96 @@
+<!-- src/app/pages/ask-ia/ask-ia.html -->
+
+<h1 class="pagina-titulo">Ask IA</h1>
+<p class="pagina-sub">Tire suas dúvidas com a IA, a qualquer hora</p>
+
+<!-- Tela de limite diário atingido -->
+@if (limiteAtingido) {
+  <div class="cartao-app limite">
+    <span class="limite-icone" aria-hidden="true">⏳</span>
+    <h2>Você usou suas {{ cotaTotal }} perguntas de hoje</h2>
+    <p>
+      O Ask.IA é gratuito, e o limite diário existe por causa da camada gratuita
+      da IA que usamos — não é cobrança.
+    </p>
+    <p class="limite-reinicio">
+      Sua cota reinicia à meia-noite ({{ horarioReinicio }}). Até lá, que tal revisar
+      seus flashcards?
+    </p>
+  </div>
+} @else {
+
+  <div class="cartao-app chat">
+
+    <!-- Contador de perguntas restantes -->
+    <div class="cota" [class.cota-baixa]="(cotaRestante ?? 0) <= 2">
+      @if (cotaRestante !== null) {
+        {{ cotaRestante }} de {{ cotaTotal }} perguntas restantes hoje
+      } @else {
+        Carregando sua cota...
+      }
+    </div>
+
+    <!-- Conversa -->
+    <div class="conversa" aria-live="polite">
+
+      @if (mensagens.length === 0) {
+        <div class="boas-vindas">
+          <p class="bolha bolha-ia">
+            Oi! Sobre qual matéria você quer tirar suas dúvidas hoje?
+          </p>
+          <div class="exemplos">
+            @for (exemplo of exemplos; track exemplo) {
+              <button type="button" class="exemplo" (click)="usarExemplo(exemplo)">
+                {{ exemplo }}
+              </button>
+            }
+          </div>
+        </div>
+      }
+
+      @for (msg of mensagens; track $index) {
+        @if (msg.autor === 'voce') {
+          <p class="bolha bolha-voce">{{ msg.texto }}</p>
+        } @else {
+          <div class="bolha bolha-ia resposta">
+            <ol class="passos">
+              @for (passo of msg.passos; track passo.titulo) {
+                <li>
+                  <strong>{{ passo.titulo }}</strong>
+                  <p>{{ passo.conteudo }}</p>
+                </li>
+              }
+            </ol>
+          </div>
+        }
+      }
+
+      <!-- Indicador de carregando -->
+      @if (carregando) {
+        <div class="bolha bolha-ia pensando" aria-label="A IA está escrevendo">
+          <span class="ponto"></span><span class="ponto"></span><span class="ponto"></span>
+        </div>
+      }
+    </div>
+
+    @if (erro) {
+      <p class="msg-erro-app">{{ erro }}</p>
+    }
+
+    <!-- Campo de pergunta (autofocus: requisito da tela) -->
+    <form class="envio" (ngSubmit)="enviar()">
+      <textarea
+        #campoPergunta
+        name="pergunta"
+        rows="2"
+        placeholder="Digite sua pergunta..."
+        [(ngModel)]="pergunta"
+        [disabled]="carregando"
+        autofocus
+      ></textarea>
+      <button type="submit" class="btn-acento" [disabled]="carregando || !pergunta.trim()">
+        {{ carregando ? '...' : 'Enviar' }}
+      </button>
+    </form>
+  </div>
+}
