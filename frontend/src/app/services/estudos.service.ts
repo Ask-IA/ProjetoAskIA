@@ -1,18 +1,16 @@
 // src/app/services/estudos.service.ts
 //
-// DADOS FALSOS (mock) para Matérias, Cronograma, Painel e Progresso.
+// Matérias, Cronograma, Painel e Progresso — agora falando com o backend real.
 //
-// Contrato de integração: os componentes consomem SEMPRE Observables,
-// como se fosse HTTP de verdade (inclusive com um pequeno delay para
-// simular rede). Quando o backend expuser os endpoints reais, a troca
-// acontece SÓ AQUI DENTRO — os componentes não mudam.
-//
-// TODO (integração): substituir os arrays em memória por chamadas
-// HttpClient aos endpoints do backend quando o Jorge os criar.
+// Antes este arquivo era um mock (arrays em memória + delay). As assinaturas
+// dos métodos foram mantidas IGUAIS de propósito: os componentes não mudaram.
+// Todo endpoint aqui vive em /api/** e exige sessão; o cookie vai sozinho
+// (credenciaisInterceptor) e um 401 manda o usuário de volta ao login.
 
-import { Injectable } from '@angular/core';
-import { Observable, of } from 'rxjs';
-import { delay } from 'rxjs/operators';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable, map } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export interface Topico {
   id: number;
@@ -42,7 +40,8 @@ export interface SessaoEstudo {
   materiaId: number;
   minutos: number;
   anotacoes?: string;
-  data: Date;
+  /** Data/hora em texto ISO, como vem do backend (ex.: 2026-09-16T20:15:00). */
+  data: string;
 }
 
 export interface ResumoPainel {
@@ -62,214 +61,75 @@ export interface DesempenhoMateria {
   minutos: number;
 }
 
-const ATRASO_REDE = 250; // ms — simula latência para os componentes já lidarem com async
+export interface Progresso {
+  ofensiva: number;
+  desempenhos: DesempenhoMateria[];
+}
 
 @Injectable({ providedIn: 'root' })
 export class EstudosService {
-  private proximoId = 100;
-
-  private materias: Materia[] = [
-    {
-      id: 1, nome: 'Matemática', cor: '#1D4ED8',
-      topicos: [
-        { id: 11, nome: 'Função Afim', concluido: true },
-        { id: 12, nome: 'Função Quadrática', concluido: false },
-        { id: 13, nome: 'Porcentagem', concluido: true },
-      ],
-    },
-    {
-      id: 2, nome: 'Português', cor: '#DC2626',
-      topicos: [
-        { id: 21, nome: 'Interpretação de texto', concluido: true },
-        { id: 22, nome: 'Crase', concluido: false },
-      ],
-    },
-    {
-      id: 3, nome: 'Geografia', cor: '#16A34A',
-      topicos: [
-        { id: 31, nome: 'Urbanização', concluido: false },
-      ],
-    },
-    {
-      id: 4, nome: 'História', cor: '#F59E0B',
-      topicos: [
-        { id: 41, nome: 'Era Vargas', concluido: true },
-        { id: 42, nome: 'República Velha', concluido: false },
-      ],
-    },
-  ];
-
-  private metas: Meta[] = [
-    { id: 51, materiaId: 1, dia: 'Segunda', hora: '19:00', descricao: 'Revisar função afim' },
-    { id: 52, materiaId: 2, dia: 'Quarta', hora: '20:00', descricao: 'Exercícios de crase' },
-  ];
-
-  private sessoes: SessaoEstudo[] = [
-    { id: 61, materiaId: 1, minutos: 40, anotacoes: 'Lista de exercícios', data: this.diasAtras(1) },
-    { id: 62, materiaId: 2, minutos: 25, data: this.diasAtras(2) },
-    { id: 63, materiaId: 1, minutos: 30, anotacoes: 'Videoaula', data: this.diasAtras(3) },
-    { id: 64, materiaId: 4, minutos: 20, data: this.diasAtras(5) },
-  ];
+  private http = inject(HttpClient);
+  private readonly api = `${environment.apiUrl}/api`;
 
   // ---------- Matérias ----------
 
   listarMaterias(): Observable<Materia[]> {
-    return of(this.clonar(this.materias)).pipe(delay(ATRASO_REDE));
+    return this.http.get<Materia[]>(`${this.api}/materias`);
   }
 
   adicionarMateria(nome: string): Observable<Materia> {
-    const cores = ['#1D4ED8', '#DC2626', '#16A34A', '#F59E0B', '#7C3AED', '#0891B2'];
-    const nova: Materia = {
-      id: this.proximoId++,
-      nome,
-      cor: cores[this.materias.length % cores.length],
-      topicos: [],
-    };
-    this.materias.push(nova);
-    return of(this.clonar(nova)).pipe(delay(ATRASO_REDE));
+    return this.http.post<Materia>(`${this.api}/materias`, { nome });
   }
 
   adicionarTopico(materiaId: number, nome: string): Observable<Topico> {
-    const materia = this.materias.find(m => m.id === materiaId);
-    const novo: Topico = { id: this.proximoId++, nome, concluido: false };
-    materia?.topicos.push(novo);
-    return of({ ...novo }).pipe(delay(ATRASO_REDE));
+    return this.http.post<Topico>(`${this.api}/materias/${materiaId}/topicos`, { nome });
   }
 
   alternarTopico(materiaId: number, topicoId: number): Observable<void> {
-    const topico = this.materias
-      .find(m => m.id === materiaId)?.topicos
-      .find(t => t.id === topicoId);
-    if (topico) topico.concluido = !topico.concluido;
-    return of(void 0).pipe(delay(ATRASO_REDE));
+    return this.http.patch<void>(`${this.api}/materias/${materiaId}/topicos/${topicoId}/alternar`, {});
   }
 
   removerTopico(materiaId: number, topicoId: number): Observable<void> {
-    const materia = this.materias.find(m => m.id === materiaId);
-    if (materia) materia.topicos = materia.topicos.filter(t => t.id !== topicoId);
-    return of(void 0).pipe(delay(ATRASO_REDE));
+    return this.http.delete<void>(`${this.api}/materias/${materiaId}/topicos/${topicoId}`);
   }
 
   // ---------- Cronograma ----------
 
   listarMetas(): Observable<Meta[]> {
-    return of(this.clonar(this.metas)).pipe(delay(ATRASO_REDE));
+    return this.http.get<Meta[]>(`${this.api}/metas`);
   }
 
   adicionarMeta(meta: Omit<Meta, 'id'>): Observable<Meta> {
-    const nova: Meta = { ...meta, id: this.proximoId++ };
-    this.metas.push(nova);
-    return of({ ...nova }).pipe(delay(ATRASO_REDE));
+    return this.http.post<Meta>(`${this.api}/metas`, meta);
   }
 
   removerMeta(id: number): Observable<void> {
-    this.metas = this.metas.filter(m => m.id !== id);
-    return of(void 0).pipe(delay(ATRASO_REDE));
+    return this.http.delete<void>(`${this.api}/metas/${id}`);
   }
 
   listarSessoes(): Observable<SessaoEstudo[]> {
-    const ordenadas = [...this.sessoes].sort((a, b) => b.data.getTime() - a.data.getTime());
-    return of(this.clonar(ordenadas)).pipe(delay(ATRASO_REDE));
+    return this.http.get<SessaoEstudo[]>(`${this.api}/sessoes`);
   }
 
   registrarSessao(sessao: Omit<SessaoEstudo, 'id' | 'data'>): Observable<SessaoEstudo> {
-    const nova: SessaoEstudo = { ...sessao, id: this.proximoId++, data: new Date() };
-    this.sessoes.push(nova);
-    return of(this.clonar(nova)).pipe(delay(ATRASO_REDE));
+    return this.http.post<SessaoEstudo>(`${this.api}/sessoes`, sessao);
   }
 
   // ---------- Resumos (Painel e Progresso) ----------
 
   resumoPainel(): Observable<ResumoPainel> {
-    const minutosTotais = this.sessoes.reduce((soma, s) => soma + s.minutos, 0);
-    const seteDiasAtras = this.diasAtras(7);
-    const minutosSemana = this.sessoes
-      .filter(s => s.data >= seteDiasAtras)
-      .reduce((soma, s) => soma + s.minutos, 0);
+    return this.http.get<ResumoPainel>(`${this.api}/painel`);
+  }
 
-    const topicosConcluidos = this.materias
-      .flatMap(m => m.topicos)
-      .filter(t => t.concluido).length;
-
-    const desempenhos = this.desempenhos();
-    const ordenado = [...desempenhos].sort((a, b) => b.percentual - a.percentual);
-
-    return of({
-      minutosTotais,
-      minutosSemana,
-      topicosConcluidos,
-      totalMaterias: this.materias.length,
-      minutosPorDia: this.minutosUltimos7Dias(),
-      maiorDesempenho: ordenado[0]
-        ? { materia: ordenado[0].materia, percentual: ordenado[0].percentual }
-        : null,
-      menorDesempenho: ordenado.length > 1
-        ? { materia: ordenado[ordenado.length - 1].materia, percentual: ordenado[ordenado.length - 1].percentual }
-        : null,
-    }).pipe(delay(ATRASO_REDE));
+  progresso(): Observable<Progresso> {
+    return this.http.get<Progresso>(`${this.api}/progresso`);
   }
 
   desempenhoPorMateria(): Observable<DesempenhoMateria[]> {
-    return of(this.desempenhos()).pipe(delay(ATRASO_REDE));
+    return this.progresso().pipe(map(p => p.desempenhos));
   }
 
-  /** Dias seguidos com pelo menos uma sessão registrada (ofensiva). */
   ofensiva(): Observable<number> {
-    let dias = 0;
-    for (let i = 0; i < 30; i++) {
-      const dia = this.diasAtras(i);
-      const temSessao = this.sessoes.some(s => this.mesmoDia(s.data, dia));
-      if (temSessao) dias++;
-      else if (i > 0) break; // hoje sem sessão ainda não quebra a sequência
-    }
-    return of(dias).pipe(delay(ATRASO_REDE));
-  }
-
-  // ---------- auxiliares ----------
-
-  private desempenhos(): DesempenhoMateria[] {
-    return this.materias.map(m => {
-      const total = m.topicos.length;
-      const feitos = m.topicos.filter(t => t.concluido).length;
-      const minutos = this.sessoes
-        .filter(s => s.materiaId === m.id)
-        .reduce((soma, s) => soma + s.minutos, 0);
-      return {
-        materia: m.nome,
-        cor: m.cor,
-        percentual: total === 0 ? 0 : Math.round((feitos / total) * 100),
-        minutos,
-      };
-    });
-  }
-
-  private minutosUltimos7Dias(): { rotulo: string; minutos: number }[] {
-    const resultado: { rotulo: string; minutos: number }[] = [];
-    for (let i = 6; i >= 0; i--) {
-      const dia = this.diasAtras(i);
-      const minutos = this.sessoes
-        .filter(s => this.mesmoDia(s.data, dia))
-        .reduce((soma, s) => soma + s.minutos, 0);
-      const rotulo = `${String(dia.getDate()).padStart(2, '0')}/${String(dia.getMonth() + 1).padStart(2, '0')}`;
-      resultado.push({ rotulo, minutos });
-    }
-    return resultado;
-  }
-
-  private diasAtras(n: number): Date {
-    const d = new Date();
-    d.setHours(0, 0, 0, 0);
-    d.setDate(d.getDate() - n);
-    return d;
-  }
-
-  private mesmoDia(a: Date, b: Date): boolean {
-    return a.getFullYear() === b.getFullYear()
-      && a.getMonth() === b.getMonth()
-      && a.getDate() === b.getDate();
-  }
-
-  private clonar<T>(valor: T): T {
-    return structuredClone(valor);
+    return this.progresso().pipe(map(p => p.ofensiva));
   }
 }

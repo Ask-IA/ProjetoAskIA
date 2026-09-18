@@ -2,36 +2,39 @@
 
 <div class="topo">
   <div>
-    <h1 class="pagina-titulo">Olá, estudante!</h1>
+    <h1 class="pagina-titulo">Olá, {{ nome() }}!</h1>
     <p class="pagina-sub">Veja seu progresso diário.</p>
   </div>
   <a routerLink="/app/ask" class="btn-acento atalho-ask">Pergunte ao Ask IA</a>
 </div>
 
-@if (!resumo) {
-  <p class="carregando">Carregando seu painel...</p>
-} @else {
+@if (erro()) {
+  <p class="msg-erro-app">
+    {{ erro() }}
+    <button type="button" class="btn-claro" (click)="carregar()">Tentar de novo</button>
+  </p>
+} @else if (resumo(); as r) {
 
   <div class="cartoes">
     <div class="cartao-app metrica">
       <span class="metrica-rotulo">Tempo Total</span>
-      <strong>{{ resumo.minutosTotais }}min</strong>
+      <strong>{{ r.minutosTotais }}min</strong>
       <small>acumulado</small>
     </div>
     <div class="cartao-app metrica">
       <span class="metrica-rotulo">Semana</span>
-      <strong>{{ resumo.minutosSemana }}min</strong>
+      <strong>{{ r.minutosSemana }}min</strong>
       <small>últimos 7 dias</small>
     </div>
     <div class="cartao-app metrica">
       <span class="metrica-rotulo">Tópicos Concluídos</span>
-      <strong>{{ resumo.topicosConcluidos }}</strong>
-      <small>{{ resumo.topicosConcluidos }} tópicos</small>
+      <strong>{{ r.topicosConcluidos }}</strong>
+      <small>{{ r.topicosConcluidos }} tópicos</small>
     </div>
     <div class="cartao-app metrica">
       <span class="metrica-rotulo">Matérias</span>
-      <strong>{{ resumo.totalMaterias }}</strong>
-      <small>{{ resumo.totalMaterias }} matérias</small>
+      <strong>{{ r.totalMaterias }}</strong>
+      <small>{{ r.totalMaterias }} matérias</small>
     </div>
   </div>
 
@@ -39,7 +42,7 @@
     <div class="cartao-app grafico">
       <span class="grafico-titulo">Últimos 7 dias — minutos estudados por dia</span>
       <div class="barras">
-        @for (dia of resumo.minutosPorDia; track dia.rotulo) {
+        @for (dia of r.minutosPorDia; track dia.rotulo) {
           <div class="coluna">
             <span class="valor">{{ dia.minutos > 0 ? dia.minutos : '' }}</span>
             <div class="barra" [style.height.%]="alturaBarra(dia.minutos)"></div>
@@ -52,16 +55,16 @@
     <div class="destaques">
       <div class="cartao-app destaque">
         <span>Matéria com maior desempenho</span>
-        @if (resumo.maiorDesempenho) {
-          <strong class="positivo">{{ resumo.maiorDesempenho.materia }}</strong>
-          <em class="positivo">{{ resumo.maiorDesempenho.percentual }}%</em>
+        @if (r.maiorDesempenho) {
+          <strong class="positivo">{{ r.maiorDesempenho.materia }}</strong>
+          <em class="positivo">{{ r.maiorDesempenho.percentual }}%</em>
         } @else { <strong>—</strong> }
       </div>
       <div class="cartao-app destaque">
         <span>Matéria com menor desempenho</span>
-        @if (resumo.menorDesempenho) {
-          <strong class="negativo">{{ resumo.menorDesempenho.materia }}</strong>
-          <em class="negativo">{{ resumo.menorDesempenho.percentual }}%</em>
+        @if (r.menorDesempenho) {
+          <strong class="negativo">{{ r.menorDesempenho.materia }}</strong>
+          <em class="negativo">{{ r.menorDesempenho.percentual }}%</em>
         } @else { <strong>—</strong> }
       </div>
     </div>
@@ -81,4 +84,6 @@
       <a routerLink="/app/quiz" class="btn-acento">Quiz IA</a>
     </div>
   </div>
+} @else {
+  <p class="carregando">Carregando seu painel...</p>
 }

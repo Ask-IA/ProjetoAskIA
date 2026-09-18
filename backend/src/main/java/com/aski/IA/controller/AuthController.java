@@ -47,13 +47,22 @@ public class AuthController {
     }
 
     // o front chama isso ao carregar a tela da aplicação, pra saber se o usuário
-    // continua logado (ex: depois de um F5 na página)
+    // continua logado (ex: depois de um F5 na página).
+    //
+    // CORREÇÃO: antes devolvia 200 com corpo vazio. Agora devolve os dados do
+    // usuário (id, name, email), que o Painel usa para a saudação.
+    // Se o id da sessão não existe mais no banco, a sessão é descartada e vira 401.
     @GetMapping("/me")
     public ResponseEntity<UserResponseDTO> me(HttpSession session) {
         Long userId = (Long) session.getAttribute("userId");
         if (userId == null) {
             return ResponseEntity.status(401).build();
         }
-        return ResponseEntity.ok().build();
+        return userService.buscarPorId(userId)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> {
+                    session.invalidate();
+                    return ResponseEntity.status(401).<UserResponseDTO>build();
+                });
     }
-}   
+}

@@ -3,22 +3,27 @@
 <h1 class="pagina-titulo">Progresso</h1>
 <p class="pagina-sub">Acompanhe sua evolução por matéria e mantenha a sequência de estudos.</p>
 
-@if (carregando) {
+@if (carregando()) {
   <p class="aviso">Carregando seu progresso...</p>
+} @else if (erro()) {
+  <p class="msg-erro-app">
+    {{ erro() }}
+    <button type="button" class="btn-claro" (click)="carregar()">Tentar de novo</button>
+  </p>
 } @else {
 
   <div class="cartoes-topo">
     <div class="cartao-app ofensiva">
       <span class="fogo" aria-hidden="true">🔥</span>
       <div>
-        <strong>{{ ofensiva }} {{ ofensiva === 1 ? 'dia' : 'dias' }} seguidos</strong>
+        <strong>{{ ofensiva() }} {{ ofensiva() === 1 ? 'dia' : 'dias' }} seguidos</strong>
         <small>estudando sem falhar</small>
       </div>
     </div>
     <div class="cartao-app ofensiva">
       <span class="fogo" aria-hidden="true">⏱</span>
       <div>
-        <strong>{{ totalMinutos }} minutos</strong>
+        <strong>{{ totalMinutos() }} minutos</strong>
         <small>registrados no total</small>
       </div>
     </div>
@@ -28,7 +33,7 @@
     <h2 class="secao">Domínio por matéria</h2>
     <p class="explica">Percentual de tópicos concluídos em cada matéria.</p>
 
-    @for (item of desempenhos; track item.materia) {
+    @for (item of desempenhos(); track item.materia) {
       <div class="linha-materia">
         <div class="rotulo">
           <span class="pilula" [style.background]="item.cor"></span>
@@ -39,13 +44,15 @@
           <div class="preenchido" [style.width.%]="item.percentual" [style.background]="item.cor"></div>
         </div>
       </div>
+    } @empty {
+      <p class="explica">Cadastre matérias e tópicos para ver seu domínio aqui.</p>
     }
   </div>
 
   <div class="cartao-app">
     <h2 class="secao">Minutos estudados por matéria</h2>
 
-    @for (item of desempenhos; track item.materia) {
+    @for (item of desempenhos(); track item.materia) {
       <div class="linha-materia">
         <div class="rotulo">
           <span class="pilula" [style.background]="item.cor"></span>
@@ -56,6 +63,8 @@
           <div class="preenchido" [style.width.%]="larguraMinutos(item.minutos)" [style.background]="item.cor"></div>
         </div>
       </div>
+    } @empty {
+      <p class="explica">Registre sessões no Cronograma para ver seus minutos aqui.</p>
     }
   </div>
 }

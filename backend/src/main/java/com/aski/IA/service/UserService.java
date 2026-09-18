@@ -9,6 +9,8 @@ import com.aski.IA.dto.UserResponseDTO;
 import com.aski.IA.model.UserModel;
 import com.aski.IA.repository.UserRepository;
 
+import java.util.Optional;
+
 @Service
 public class UserService {
 
@@ -20,9 +22,19 @@ public class UserService {
         this.passwordEncoder = passwordEncoder;
     }
 
+    /** Tamanho mínimo da senha — o MESMO valor que o frontend exige (cadastro.ts). */
+    private static final int TAMANHO_MINIMO_SENHA = 6;
+
     public UserResponseDTO register(RegisterRequestDTO dto){
         if(userRepository.existsByEmail(dto.email())){
             throw new IllegalArgumentException("Já existe um usuário com esse Email.");
+        }
+
+        // O frontend já valida isso, mas a regra precisa existir aqui também:
+        // qualquer um pode chamar a API direto (Postman, curl) pulando a tela.
+        if(dto.password() == null || dto.password().length() < TAMANHO_MINIMO_SENHA){
+            throw new IllegalArgumentException(
+                    "A senha precisa ter pelo menos " + TAMANHO_MINIMO_SENHA + " caracteres.");
         }
 
         UserModel user = new UserModel(
@@ -44,5 +56,11 @@ public class UserService {
             }
 
             return new UserResponseDTO(user.getId(), user.getName(), user.getEmail());
+    }
+
+    /** Usado pelo GET /auth/me: devolve os dados do usuário da sessão (vazio se ele não existir mais). */
+    public Optional<UserResponseDTO> buscarPorId(Long id){
+        return userRepository.findById(id)
+                .map(user -> new UserResponseDTO(user.getId(), user.getName(), user.getEmail()));
     }
 }

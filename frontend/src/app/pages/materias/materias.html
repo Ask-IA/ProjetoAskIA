@@ -3,6 +3,10 @@
 <h1 class="pagina-titulo">Suas Matérias</h1>
 <p class="pagina-sub">Cadastre sua matéria aqui e organize os tópicos</p>
 
+@if (erro()) {
+  <p class="msg-erro-app">{{ erro() }}</p>
+}
+
 <div class="duas-colunas">
 
   <!-- Lista de matérias -->
@@ -16,11 +20,15 @@
       <button type="submit" class="btn-claro">Adicionar</button>
     </form>
 
-    @for (materia of materias; track materia.id) {
+    @if (carregando()) {
+      <p class="vazio">Carregando suas matérias...</p>
+    }
+
+    @for (materia of materias(); track materia.id) {
       <button
         type="button"
         class="cartao-app item-materia"
-        [class.selecionada]="materia.id === selecionada?.id"
+        [class.selecionada]="materia.id === selecionada()?.id"
         (click)="selecionar(materia)"
       >
         <span class="pilula" [style.background]="materia.cor"></span>
@@ -35,12 +43,10 @@
 
   <!-- Detalhe da matéria selecionada -->
   <div class="cartao-app coluna-detalhe">
-    @if (!selecionada) {
-      <p class="vazio">Selecione ou cadastre uma matéria para começar.</p>
-    } @else {
+    @if (selecionada(); as materia) {
       <h2>
-        <span class="pilula" [style.background]="selecionada.cor"></span>
-        {{ selecionada.nome }}
+        <span class="pilula" [style.background]="materia.cor"></span>
+        {{ materia.nome }}
       </h2>
 
       <form class="form-linha" (ngSubmit)="adicionarTopico()">
@@ -52,7 +58,7 @@
         <button type="submit" class="btn-claro">Adicionar</button>
       </form>
 
-      @for (topico of selecionada.topicos; track topico.id) {
+      @for (topico of materia.topicos; track topico.id) {
         <div class="topico">
           <label>
             <input
@@ -79,9 +85,9 @@
       <!-- Temporizador de Estudos -->
       <div class="temporizador">
         <h3>Temporizador de Estudos</h3>
-        <div class="mostrador">{{ tempoFormatado }}</div>
+        <div class="mostrador">{{ tempoFormatado() }}</div>
         <div class="controles">
-          @if (!rodando) {
+          @if (!rodando()) {
             <button type="button" class="btn-acento" (click)="comecar()">Começar</button>
           } @else {
             <button type="button" class="btn-acento" (click)="pausar()">Pausar</button>
@@ -89,6 +95,8 @@
           <button type="button" class="btn-claro" (click)="zerar()">Zerar</button>
         </div>
       </div>
+    } @else {
+      <p class="vazio">Selecione ou cadastre uma matéria para começar.</p>
     }
   </div>
 </div>

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -13,9 +13,12 @@ import { HttpErrorResponse } from '@angular/common/http';
 })
 export class Login {
   form: FormGroup;
-  errorMessage = '';
-  loading = false;
-  mostrarSenha = false; // controla o "olhinho" do campo de senha
+
+  // signals: a resposta do backend chega de forma assíncrona e, no modo
+  // zoneless, só o signal avisa o Angular para redesenhar a tela.
+  errorMessage = signal('');
+  loading = signal(false);
+  mostrarSenha = signal(false); // controla o "olhinho" do campo de senha
 
   constructor(
     private fb: FormBuilder,
@@ -29,25 +32,25 @@ export class Login {
   }
 
   onSubmit(): void {
-    this.errorMessage = '';
+    this.errorMessage.set('');
 
     if (this.form.invalid) {
-      this.errorMessage = 'Preencha usuario e senha corretamente.';
+      this.errorMessage.set('Preencha e-mail e senha corretamente.');
       return;
     }
 
-    this.loading = true;
+    this.loading.set(true);
     this.authService.login(this.form.value).subscribe({
       next: () => {
-        this.loading = false;
+        this.loading.set(false);
         this.router.navigateByUrl('/app');
       },
       //o tsconfig esta com strict/noImplicitAny, entao todo parametro precisa
       // de tipo declarado. Estava sem tipo e o build quebrava
       // Tipei como HttpErrorResponse para ter autocomplete em err.status e err.error
       error: (err: HttpErrorResponse) => {
-        this.loading = false;
-        this.errorMessage = err.error?.message ?? 'Nao foi possivel entrar. Tente novamente.';
+        this.loading.set(false);
+        this.errorMessage.set(err.error?.message ?? 'Não foi possível entrar. Tente novamente.');
       },
     });
   }

@@ -1,10 +1,10 @@
 // src/app/pages/flashcards/flashcards.ts
 //
-// Revisão por flashcards com DADOS FALSOS.
-// No produto final os cartões serão gerados pela IA (revisão espaçada);
-// aqui o fluxo de revisão já funciona: virar, acertei/errei, resumo final.
+// Revisão por flashcards (ainda com DADOS FALSOS).
+// `cartoes` e `carregando` são signals porque chegam de forma assíncrona —
+// no modo zoneless, só o signal avisa o Angular para redesenhar a tela.
 
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { Flashcard, RevisaoService } from '../../services/revisao.service';
 
 @Component({
@@ -16,46 +16,52 @@ import { Flashcard, RevisaoService } from '../../services/revisao.service';
 export class Flashcards implements OnInit {
   private revisao = inject(RevisaoService);
 
-  cartoes: Flashcard[] = [];
-  indice = 0;
-  virado = false;
-  acertos = 0;
-  erros = 0;
-  terminou = false;
-  carregando = true;
+  cartoes = signal<Flashcard[]>([]);
+  carregando = signal(true);
+  erro = signal('');
+
+  indice = signal(0);
+  virado = signal(false);
+  acertos = signal(0);
+  erros = signal(0);
+  terminou = signal(false);
+
+  atual = computed<Flashcard | null>(() => this.cartoes()[this.indice()] ?? null);
 
   ngOnInit(): void {
-    this.revisao.listarFlashcards().subscribe(lista => {
-      this.cartoes = lista;
-      this.carregando = false;
+    this.revisao.listarFlashcards().subscribe({
+      next: lista => {
+        this.cartoes.set(lista);
+        this.carregando.set(false);
+      },
+      error: () => {
+        this.carregando.set(false);
+        this.erro.set('Não foi possível carregar seus flashcards.');
+      },
     });
   }
 
-  get atual(): Flashcard | null {
-    return this.cartoes[this.indice] ?? null;
-  }
-
   virar(): void {
-    this.virado = !this.virado;
+    this.virado.update(v => !v);
   }
 
   responder(acertou: boolean): void {
-    if (acertou) this.acertos++;
-    else this.erros++;
+    if (acertou) this.acertos.update(n => n + 1);
+    else this.erros.update(n => n + 1);
 
-    if (this.indice + 1 >= this.cartoes.length) {
-      this.terminou = true;
+    if (this.indice() + 1 >= this.cartoes().length) {
+      this.terminou.set(true);
     } else {
-      this.indice++;
-      this.virado = false;
+      this.indice.update(i => i + 1);
+      this.virado.set(false);
     }
   }
 
   reiniciar(): void {
-    this.indice = 0;
-    this.virado = false;
-    this.acertos = 0;
-    this.erros = 0;
-    this.terminou = false;
+    this.indice.set(0);
+    this.virado.set(false);
+    this.acertos.set(0);
+    this.erros.set(0);
+    this.terminou.set(false);
   }
 }

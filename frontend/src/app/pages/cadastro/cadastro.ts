@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
@@ -22,12 +22,15 @@ function passwordsMatchValidator(group: AbstractControl): ValidationErrors | nul
 })
 export class Cadastro {
   form: FormGroup;
-  errorMessage = '';
-  loading = false;
+
+  // signals: a resposta do backend chega de forma assíncrona e, no modo
+  // zoneless, só o signal avisa o Angular para redesenhar a tela.
+  errorMessage = signal('');
+  loading = signal(false);
 
   // "olhinhos" — um para cada campo de senha
-  mostrarSenha = false;
-  mostrarConfirmacao = false;
+  mostrarSenha = signal(false);
+  mostrarConfirmacao = signal(false);
 
   readonly tamanhoMinimo = TAMANHO_MINIMO_SENHA;
 
@@ -58,39 +61,39 @@ export class Cadastro {
   }
 
   onSubmit(): void {
-    this.errorMessage = '';
+    this.errorMessage.set('');
 
     if (this.form.invalid) {
       // mensagem específica por problema, em vez de uma genérica
       const senha = this.form.get('password');
       if (this.form.get('email')?.invalid) {
-        this.errorMessage = 'Informe um e-mail válido.';
+        this.errorMessage.set('Informe um e-mail válido.');
       } else if (this.form.get('name')?.invalid) {
-        this.errorMessage = 'Informe seu nome.';
+        this.errorMessage.set('Informe seu nome.');
       } else if (senha?.hasError('required')) {
-        this.errorMessage = 'Informe uma senha.';
+        this.errorMessage.set('Informe uma senha.');
       } else if (senha?.hasError('minlength')) {
-        this.errorMessage = `A senha precisa ter pelo menos ${this.tamanhoMinimo} caracteres.`;
+        this.errorMessage.set(`A senha precisa ter pelo menos ${this.tamanhoMinimo} caracteres.`);
       } else if (this.form.errors?.['passwordsMismatch']) {
-        this.errorMessage = 'As senhas não coincidem.';
+        this.errorMessage.set('As senhas não coincidem.');
       } else {
-        this.errorMessage = 'Preencha todos os campos corretamente.';
+        this.errorMessage.set('Preencha todos os campos corretamente.');
       }
       return;
     }
 
-    this.loading = true;
+    this.loading.set(true);
     const { email, name, password } = this.form.value;
 
     this.authService.register({ email, name, password }).subscribe({
       next: () => {
-        this.loading = false;
+        this.loading.set(false);
         // cadastro deu certo -> manda pro login
         this.router.navigateByUrl('/login');
       },
       error: (err) => {
-        this.loading = false;
-        this.errorMessage = err.error?.message ?? 'Não foi possível cadastrar. Tente novamente.';
+        this.loading.set(false);
+        this.errorMessage.set(err.error?.message ?? 'Não foi possível cadastrar. Tente novamente.');
       },
     });
   }

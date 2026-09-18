@@ -4,7 +4,7 @@
 <p class="pagina-sub">Tire suas dúvidas com a IA, a qualquer hora</p>
 
 <!-- Tela de limite diário atingido -->
-@if (limiteAtingido) {
+@if (limiteAtingido()) {
   <div class="cartao-app limite">
     <span class="limite-icone" aria-hidden="true">⏳</span>
     <h2>Você usou suas {{ cotaTotal }} perguntas de hoje</h2>
@@ -22,9 +22,9 @@
   <div class="cartao-app chat">
 
     <!-- Contador de perguntas restantes -->
-    <div class="cota" [class.cota-baixa]="(cotaRestante ?? 0) <= 2">
-      @if (cotaRestante !== null) {
-        {{ cotaRestante }} de {{ cotaTotal }} perguntas restantes hoje
+    <div class="cota" [class.cota-baixa]="(cotaRestante() ?? 0) <= 2">
+      @if (cotaRestante() !== null) {
+        {{ cotaRestante() }} de {{ cotaTotal }} perguntas restantes hoje
       } @else {
         Carregando sua cota...
       }
@@ -33,7 +33,7 @@
     <!-- Conversa -->
     <div class="conversa" aria-live="polite">
 
-      @if (mensagens.length === 0) {
+      @if (mensagens().length === 0) {
         <div class="boas-vindas">
           <p class="bolha bolha-ia">
             Oi! Sobre qual matéria você quer tirar suas dúvidas hoje?
@@ -48,7 +48,7 @@
         </div>
       }
 
-      @for (msg of mensagens; track $index) {
+      @for (msg of mensagens(); track $index) {
         @if (msg.autor === 'voce') {
           <p class="bolha bolha-voce">{{ msg.texto }}</p>
         } @else {
@@ -66,15 +66,15 @@
       }
 
       <!-- Indicador de carregando -->
-      @if (carregando) {
+      @if (carregando()) {
         <div class="bolha bolha-ia pensando" aria-label="A IA está escrevendo">
           <span class="ponto"></span><span class="ponto"></span><span class="ponto"></span>
         </div>
       }
     </div>
 
-    @if (erro) {
-      <p class="msg-erro-app">{{ erro }}</p>
+    @if (erro()) {
+      <p class="msg-erro-app">{{ erro() }}</p>
     }
 
     <!-- Campo de pergunta (autofocus: requisito da tela) -->
@@ -85,11 +85,11 @@
         rows="2"
         placeholder="Digite sua pergunta..."
         [(ngModel)]="pergunta"
-        [disabled]="carregando"
+        [disabled]="carregando()"
         autofocus
       ></textarea>
-      <button type="submit" class="btn-acento" [disabled]="carregando || !pergunta.trim()">
-        {{ carregando ? '...' : 'Enviar' }}
+      <button type="submit" class="btn-acento" [disabled]="carregando() || !pergunta.trim()">
+        {{ carregando() ? '...' : 'Enviar' }}
       </button>
     </form>
   </div>

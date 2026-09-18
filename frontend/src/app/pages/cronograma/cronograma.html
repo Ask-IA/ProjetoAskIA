@@ -3,6 +3,10 @@
 <h1 class="pagina-titulo">Cronograma</h1>
 <p class="pagina-sub">Organize seu plano de estudos por dia e registre suas sessões.</p>
 
+@if (erro()) {
+  <p class="msg-erro-app">{{ erro() }}</p>
+}
+
 <div class="duas-colunas">
 
   <div class="coluna-formularios">
@@ -15,7 +19,7 @@
         <label for="meta-materia">Matéria</label>
         <select id="meta-materia" name="metaMateria" [(ngModel)]="metaMateriaId">
           <option [ngValue]="null" disabled>Selecione uma matéria...</option>
-          @for (materia of materias; track materia.id) {
+          @for (materia of materias(); track materia.id) {
             <option [ngValue]="materia.id">{{ materia.nome }}</option>
           }
         </select>
@@ -55,7 +59,7 @@
         <label for="sessao-materia">Matéria</label>
         <select id="sessao-materia" name="sessaoMateria" [(ngModel)]="sessaoMateriaId">
           <option [ngValue]="null" disabled>Selecione uma matéria...</option>
-          @for (materia of materias; track materia.id) {
+          @for (materia of materias(); track materia.id) {
             <option [ngValue]="materia.id">{{ materia.nome }}</option>
           }
         </select>
@@ -103,7 +107,7 @@
 
     <div class="cartao-app">
       <strong class="secao-titulo">Sessões recentes</strong>
-      @for (sessao of sessoes; track sessao.id) {
+      @for (sessao of sessoes(); track sessao.id) {
         <div class="sessao">
           <span>{{ nomeMateria(sessao.materiaId) }} — {{ sessao.minutos }}min</span>
           <small>{{ sessao.data | date:'dd/MM' }}</small>

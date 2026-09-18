@@ -26,11 +26,11 @@
     <label for="password">Informe a Senha</label>
     <!-- campo + botão do "olhinho" (mostrar/ocultar a senha) -->
     <div class="campo-senha">
-      <input [type]="mostrarSenha ? 'text' : 'password'" id="password" formControlName="password" autocomplete="current-password" required />
-      <button type="button" class="olhinho" (click)="mostrarSenha = !mostrarSenha"
-              [attr.aria-label]="mostrarSenha ? 'Ocultar senha' : 'Mostrar senha'"
-              [attr.aria-pressed]="mostrarSenha">
-        @if (mostrarSenha) {
+      <input [type]="mostrarSenha() ? 'text' : 'password'" id="password" formControlName="password" autocomplete="current-password" required />
+      <button type="button" class="olhinho" (click)="mostrarSenha.set(!mostrarSenha())"
+              [attr.aria-label]="mostrarSenha() ? 'Ocultar senha' : 'Mostrar senha'"
+              [attr.aria-pressed]="mostrarSenha()">
+        @if (mostrarSenha()) {
           <!-- olho riscado: a senha está visível, clique para ocultar -->
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18" aria-hidden="true">
             <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
@@ -48,9 +48,9 @@
       </button>
     </div>
   </div>
-  <p id="error-message" class="error-message" *ngIf="errorMessage">{{ errorMessage }}</p>
+  <p id="error-message" class="error-message" *ngIf="errorMessage()">{{ errorMessage() }}</p>
 
-  <button type="submit" class="btn-primary" [disabled]="loading">{{ loading ? 'Entrando...' : 'Entrar' }}</button>
+  <button type="submit" class="btn-primary" [disabled]="loading()">{{ loading() ? 'Entrando...' : 'Entrar' }}</button>
 
       <p class="signup-text">
         Não possui um login?

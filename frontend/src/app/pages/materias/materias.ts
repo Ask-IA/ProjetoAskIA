@@ -1,9 +1,11 @@
 // src/app/pages/materias/materias.ts
 //
-// Cadastro de matérias e tópicos (mockup "Suas Matérias") com DADOS FALSOS.
-// Inclui o Temporizador de Estudos (25:00) do protótipo.
+// Matérias, tópicos e o Temporizador de Estudos.
+// Estado em signals: o app é zoneless. Sem isso, a lista só aparecia depois de
+// um clique qualquer, e o temporizador ficaria parado em 25:00 na tela mesmo
+// contando por baixo dos panos (o setInterval não avisa o Angular sozinho).
 
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { EstudosService, Materia } from '../../services/estudos.service';
 
@@ -17,17 +19,26 @@ import { EstudosService, Materia } from '../../services/estudos.service';
 export class Materias implements OnInit, OnDestroy {
   private estudos = inject(EstudosService);
 
-  materias: Materia[] = [];
-  selecionada: Materia | null = null;
+  materias = signal<Materia[]>([]);
+  selecionada = signal<Materia | null>(null);
+  carregando = signal(true);
+  erro = signal('');
 
+  // ligados ao [(ngModel)] — digitar já dispara o redesenho
   novaMateria = '';
   novoTopico = '';
 
   // ----- Temporizador (pomodoro 25min) -----
   readonly duracaoPadrao = 25 * 60;
-  segundosRestantes = this.duracaoPadrao;
-  rodando = false;
+  segundosRestantes = signal(this.duracaoPadrao);
+  rodando = signal(false);
   private intervalo?: ReturnType<typeof setInterval>;
+
+  tempoFormatado = computed(() => {
+    const m = Math.floor(this.segundosRestantes() / 60);
+    const s = this.segundosRestantes() % 60;
+    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  });
 
   ngOnInit(): void {
     this.carregar();
@@ -37,62 +48,83 @@ export class Materias implements OnInit, OnDestroy {
     clearInterval(this.intervalo);
   }
 
-  private carregar(manterSelecao = false): void {
-    const idSelecionada = this.selecionada?.id;
-    this.estudos.listarMaterias().subscribe(lista => {
-      this.materias = lista;
-      this.selecionada = manterSelecao
-        ? lista.find(m => m.id === idSelecionada) ?? lista[0] ?? null
-        : lista[0] ?? null;
+  carregar(manterSelecao = false): void {
+    const idSelecionada = this.selecionada()?.id;
+    this.erro.set('');
+
+    this.estudos.listarMaterias().subscribe({
+      next: lista => {
+        this.materias.set(lista);
+        this.selecionada.set(
+          manterSelecao
+            ? lista.find(m => m.id === idSelecionada) ?? lista[0] ?? null
+            : lista[0] ?? null
+        );
+        this.carregando.set(false);
+      },
+      error: () => {
+        this.carregando.set(false);
+        this.erro.set('Não foi possível carregar suas matérias.');
+      },
     });
   }
 
   selecionar(materia: Materia): void {
-    this.selecionada = materia;
+    this.selecionada.set(materia);
   }
 
   adicionarMateria(): void {
     const nome = this.novaMateria.trim();
     if (!nome) return;
-    this.estudos.adicionarMateria(nome).subscribe(() => {
-      this.novaMateria = '';
-      this.carregar(true);
+    this.estudos.adicionarMateria(nome).subscribe({
+      next: () => {
+        this.novaMateria = '';
+        this.carregar(true);
+      },
+      error: () => this.erro.set('Não foi possível cadastrar a matéria.'),
     });
   }
 
   adicionarTopico(): void {
     const nome = this.novoTopico.trim();
-    if (!nome || !this.selecionada) return;
-    this.estudos.adicionarTopico(this.selecionada.id, nome).subscribe(() => {
-      this.novoTopico = '';
-      this.carregar(true);
+    const materia = this.selecionada();
+    if (!nome || !materia) return;
+
+    this.estudos.adicionarTopico(materia.id, nome).subscribe({
+      next: () => {
+        this.novoTopico = '';
+        this.carregar(true);
+      },
+      error: () => this.erro.set('Não foi possível adicionar o tópico.'),
     });
   }
 
   alternarTopico(topicoId: number): void {
-    if (!this.selecionada) return;
-    this.estudos.alternarTopico(this.selecionada.id, topicoId).subscribe(() => this.carregar(true));
+    const materia = this.selecionada();
+    if (!materia) return;
+    this.estudos.alternarTopico(materia.id, topicoId).subscribe({
+      next: () => this.carregar(true),
+      error: () => this.erro.set('Não foi possível atualizar o tópico.'),
+    });
   }
 
   removerTopico(topicoId: number): void {
-    if (!this.selecionada) return;
-    this.estudos.removerTopico(this.selecionada.id, topicoId).subscribe(() => this.carregar(true));
+    const materia = this.selecionada();
+    if (!materia) return;
+    this.estudos.removerTopico(materia.id, topicoId).subscribe({
+      next: () => this.carregar(true),
+      error: () => this.erro.set('Não foi possível remover o tópico.'),
+    });
   }
 
   // ----- Temporizador -----
 
-  get tempoFormatado(): string {
-    const m = Math.floor(this.segundosRestantes / 60);
-    const s = this.segundosRestantes % 60;
-    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-  }
-
   comecar(): void {
-    if (this.rodando) return;
-    this.rodando = true;
+    if (this.rodando()) return;
+    this.rodando.set(true);
     this.intervalo = setInterval(() => {
-      if (this.segundosRestantes > 0) {
-        this.segundosRestantes--;
+      if (this.segundosRestantes() > 0) {
+        this.segundosRestantes.update(s => s - 1);
       } else {
         this.pausar();
         // TODO (melhoria futura): ao zerar, oferecer registrar a sessão
@@ -102,12 +134,12 @@ export class Materias implements OnInit, OnDestroy {
   }
 
   pausar(): void {
-    this.rodando = false;
+    this.rodando.set(false);
     clearInterval(this.intervalo);
   }
 
   zerar(): void {
     this.pausar();
-    this.segundosRestantes = this.duracaoPadrao;
+    this.segundosRestantes.set(this.duracaoPadrao);
   }
 }

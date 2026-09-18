@@ -1,9 +1,10 @@
 // src/app/pages/progresso/progresso.ts
 //
-// Visão de progresso do aluno com DADOS FALSOS:
-// ofensiva (dias seguidos estudando), domínio por matéria e minutos por matéria.
+// Ofensiva (dias seguidos estudando), domínio e minutos por matéria.
+// Usa signals pelo mesmo motivo do Painel: o app é zoneless, e só o signal
+// avisa o Angular para redesenhar a tela quando o dado chega.
 
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { DesempenhoMateria, EstudosService } from '../../services/estudos.service';
 
 @Component({
@@ -15,24 +16,39 @@ import { DesempenhoMateria, EstudosService } from '../../services/estudos.servic
 export class Progresso implements OnInit {
   private estudos = inject(EstudosService);
 
-  ofensiva = 0;
-  desempenhos: DesempenhoMateria[] = [];
-  carregando = true;
+  ofensiva = signal(0);
+  desempenhos = signal<DesempenhoMateria[]>([]);
+  carregando = signal(true);
+  erro = signal('');
+
+  /** Recalculado sozinho sempre que `desempenhos` muda. */
+  totalMinutos = computed(() =>
+    this.desempenhos().reduce((soma, d) => soma + d.minutos, 0)
+  );
 
   ngOnInit(): void {
-    this.estudos.ofensiva().subscribe(dias => (this.ofensiva = dias));
-    this.estudos.desempenhoPorMateria().subscribe(lista => {
-      this.desempenhos = lista;
-      this.carregando = false;
+    this.carregar();
+  }
+
+  carregar(): void {
+    this.carregando.set(true);
+    this.erro.set('');
+
+    this.estudos.progresso().subscribe({
+      next: p => {
+        this.ofensiva.set(p.ofensiva);
+        this.desempenhos.set(p.desempenhos);
+        this.carregando.set(false);
+      },
+      error: () => {
+        this.carregando.set(false);
+        this.erro.set('Não foi possível carregar seu progresso.');
+      },
     });
   }
 
-  get totalMinutos(): number {
-    return this.desempenhos.reduce((soma, d) => soma + d.minutos, 0);
-  }
-
   larguraMinutos(minutos: number): number {
-    const maximo = Math.max(...this.desempenhos.map(d => d.minutos), 1);
+    const maximo = Math.max(...this.desempenhos().map(d => d.minutos), 1);
     return Math.round((minutos / maximo) * 100);
   }
 }

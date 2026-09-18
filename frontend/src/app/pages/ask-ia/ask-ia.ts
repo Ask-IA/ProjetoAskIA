@@ -1,19 +1,15 @@
 // src/app/pages/ask-ia/ask-ia.ts
 //
-// Tela principal do produto: chat com a IA (com DADOS FALSOS por enquanto).
+// Tela principal do produto: chat com a IA (ainda com DADOS FALSOS).
 //
-// Requisitos atendidos (vindos do backlog + user stories):
-// - campo de pergunta já em foco ao abrir
-// - três exemplos clicáveis de dúvida
-// - indicador de "carregando" enquanto a IA responde
-// - resposta em passos numerados
-// - contador de perguntas restantes do dia
-// - estado de erro que PRESERVA o texto digitado
-// - tela de limite diário atingido, com horário de reinício
+// Estado em signals: o app é zoneless, e só o signal avisa o Angular para
+// redesenhar quando algo muda fora de um clique (resposta da IA, cota, erro).
+// `pergunta` continua propriedade comum porque está ligada ao [(ngModel)] —
+// digitar já é um evento e o Angular redesenha sozinho nesse caso.
 //
 // Para testar o estado de erro: digite "erro" e envie.
 
-import { Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AskIaService, COTA_DIARIA, PassoResposta } from '../../services/ask-ia.service';
 
@@ -36,13 +32,14 @@ export class AskIa implements OnInit {
   @ViewChild('campoPergunta') campoPergunta?: ElementRef<HTMLTextAreaElement>;
 
   pergunta = '';
-  mensagens: Mensagem[] = [];
-  carregando = false;
-  erro = '';
-  limiteAtingido = false;
+
+  mensagens = signal<Mensagem[]>([]);
+  carregando = signal(false);
+  erro = signal('');
+  limiteAtingido = signal(false);
+  cotaRestante = signal<number | null>(null);
 
   cotaTotal = COTA_DIARIA;
-  cotaRestante: number | null = null;
   horarioReinicio = this.service.horarioReinicio();
 
   exemplos = [
@@ -52,9 +49,12 @@ export class AskIa implements OnInit {
   ];
 
   ngOnInit(): void {
-    this.service.cotaRestante().subscribe(restante => {
-      this.cotaRestante = restante;
-      this.limiteAtingido = restante <= 0;
+    this.service.cotaRestante().subscribe({
+      next: restante => {
+        this.cotaRestante.set(restante);
+        this.limiteAtingido.set(restante <= 0);
+      },
+      error: () => this.erro.set('Não foi possível verificar sua cota de hoje.'),
     });
   }
 
@@ -65,32 +65,32 @@ export class AskIa implements OnInit {
 
   enviar(): void {
     const texto = this.pergunta.trim();
-    if (!texto || this.carregando || this.limiteAtingido) return;
+    if (!texto || this.carregando() || this.limiteAtingido()) return;
 
-    this.erro = '';
-    this.carregando = true;
-    this.mensagens.push({ autor: 'voce', texto });
+    this.erro.set('');
+    this.carregando.set(true);
+    this.mensagens.update(lista => [...lista, { autor: 'voce', texto }]);
 
     this.service.perguntar(texto).subscribe({
       next: resposta => {
-        this.carregando = false;
-        this.cotaRestante = resposta.cotaRestante;
-        this.mensagens.push({ autor: 'ia', passos: resposta.passos });
+        this.carregando.set(false);
+        this.cotaRestante.set(resposta.cotaRestante);
+        this.mensagens.update(lista => [...lista, { autor: 'ia', passos: resposta.passos }]);
         this.pergunta = ''; // só limpa quando deu certo
       },
       error: (err: { status?: number; message?: string }) => {
-        this.carregando = false;
+        this.carregando.set(false);
         // a última mensagem "sua" sai da conversa, porque não foi respondida
-        this.mensagens.pop();
+        this.mensagens.update(lista => lista.slice(0, -1));
 
         if (err?.status === 429) {
-          this.limiteAtingido = true;
-          this.cotaRestante = 0;
+          this.limiteAtingido.set(true);
+          this.cotaRestante.set(0);
           return;
         }
 
         // Estado de erro: o texto digitado CONTINUA no campo
-        this.erro = 'Não foi possível obter a resposta agora. Sua pergunta foi mantida no campo — tente enviar de novo.';
+        this.erro.set('Não foi possível obter a resposta agora. Sua pergunta foi mantida no campo — tente enviar de novo.');
       },
     });
   }
