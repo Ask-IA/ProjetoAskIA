@@ -1,57 +1,96 @@
 /* src/app/pages/painel/painel.css */
 
-.topo { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
-.atalho-ask { text-decoration: none; display: inline-block; }
-
-.carregando { color: var(--texto-suave); }
-
-.cartoes {
+/* Celular: saudação e conta na primeira linha, o botão principal embaixo */
+.topo {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 14px;
-  margin-bottom: 18px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "saudacao conta"
+    "continuar continuar";
+  gap: 14px 16px;
+  align-items: start;
+  margin-bottom: 22px;
 }
-.metrica { display: flex; flex-direction: column; gap: 4px; }
-.metrica-rotulo { color: var(--texto-suave); font-size: .85rem; }
-.metrica strong { font-size: 1.7rem; color: var(--texto); }
-.metrica small { color: var(--texto-suave); }
+.saudacao { grid-area: saudacao; }
+.saudacao .pagina-sub { margin: 0; }
+.conta-celular { grid-area: conta; }
 
+.continuar { grid-area: continuar; display: flex; flex-direction: column; gap: 6px; }
+.continuar .btn-acento { min-height: 48px; padding: 12px 22px; font-size: 1rem; font-weight: 700; }
+.continuar-texto { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.continuar-detalhe { color: var(--texto-suave); font-size: .8125rem; }
+
+.cartoes,
 .linha-meio {
   display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 14px;
-  margin-bottom: 18px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  margin-bottom: 16px;
 }
-@media (max-width: 760px) { .linha-meio { grid-template-columns: 1fr; } }
 
-.grafico-titulo { color: var(--texto-suave); font-size: .85rem; }
-.barras {
-  display: flex; align-items: flex-end; gap: 10px;
-  height: 160px; margin-top: 16px;
+.resumo { display: flex; flex-direction: column; gap: 10px; }
+.numero-grande { margin: 0; font-size: 1.625rem; font-weight: 700; line-height: 1.2; }
+.detalhe { margin: 0; color: var(--texto-suave); font-size: .875rem; }
+.embaixo { align-self: flex-start; margin-top: auto; }
+
+/* Ofensiva: dia estudado = bolinha cheia; sem estudo = tracejada; hoje = anel */
+.dias { display: flex; gap: 8px; }
+.dias li { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--texto-suave); font-size: .75rem; }
+.dias .bolinha { width: 22px; height: 22px; border: 1.5px dashed var(--borda-campo); border-radius: 50%; }
+.dias .estudou .bolinha { border: 0; background: var(--texto-suave); }
+.dias .hoje { color: var(--texto); font-weight: 700; }
+.dias .hoje .bolinha { box-shadow: 0 0 0 2px var(--cartao), 0 0 0 4px var(--texto-suave); }
+
+.barrinhas { display: flex; align-items: flex-end; gap: 6px; height: 44px; }
+.barrinhas span { flex: 1; min-height: 3px; border-radius: 4px 4px 0 0; background: var(--texto-suave); }
+.barrinhas .vazia { background: var(--trilha); }
+
+.cabecalho-secao {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 12px;
+  margin-bottom: 14px;
 }
-.coluna { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; }
-.valor { font-size: .75rem; color: var(--texto-suave); }
-.barra {
-  width: 100%; max-width: 34px; min-height: 2px;
-  background: var(--acento); border-radius: 6px 6px 0 0;
-  transition: height .4s ease;
-}
-.dia { font-size: .72rem; color: var(--texto-suave); }
 
-.destaques { display: flex; flex-direction: column; gap: 14px; }
-.destaque { display: flex; flex-direction: column; gap: 6px; }
-.destaque span { color: var(--texto); font-weight: 600; }
-.destaque strong { font-size: 1.2rem; }
-.destaque em { font-style: normal; font-weight: 700; }
-.positivo { color: var(--sucesso); }
-.negativo { color: var(--erro); }
-.destaque strong.positivo, .destaque strong.negativo { color: var(--texto); }
-
-.atalhos {
+/* Barras por área: nome escrito + barra na cor da área + número */
+.linha-area {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 14px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: "nome valor" "trilha trilha";
+  gap: 6px 12px;
+  align-items: center;
+  padding: 6px 0;
+  font-size: .9375rem;
 }
-.atalho { display: flex; flex-direction: column; gap: 12px; align-items: flex-start; }
-.atalho span { color: var(--texto); font-weight: 600; }
-.atalho a { text-decoration: none; }
+.nome-area { grid-area: nome; display: flex; align-items: center; gap: 8px; }
+.trilha { grid-area: trilha; display: flex; height: 12px; overflow: hidden; border-radius: 6px; background: var(--trilha); }
+.preenchido { border-radius: 6px; background: var(--area); }
+.valor { grid-area: valor; display: inline-flex; align-items: baseline; justify-content: flex-end; gap: 6px; white-space: nowrap; }
+.valor small, .grade-materias small { color: var(--texto-suave); font-size: .8125rem; }
+
+.foco { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; }
+.foco p { margin: 0; line-height: 1.5; }
+.foco .btn-contorno { margin-top: auto; }
+
+.grade-materias { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 18px; }
+.grade-materias li { display: flex; flex-direction: column; gap: 4px; }
+.nome-materia { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+
+@media (min-width: 768px) {
+  .topo { grid-template-areas: "saudacao continuar"; align-items: end; }
+  .conta-celular { display: none; }
+  .continuar { align-items: flex-end; max-width: 420px; }
+  .continuar .btn-acento { max-width: 100%; }
+  .linha-area {
+    grid-template-columns: minmax(0, 190px) minmax(0, 1fr) 110px;
+    grid-template-areas: "nome trilha valor";
+  }
+}
+
+@media (min-width: 1000px) {
+  .cartoes { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .linha-meio { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
+  .grade-materias { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}

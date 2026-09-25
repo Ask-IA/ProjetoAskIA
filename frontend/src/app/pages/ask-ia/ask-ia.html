@@ -1,96 +1,154 @@
 <!-- src/app/pages/ask-ia/ask-ia.html -->
 
-<h1 class="pagina-titulo">Ask IA</h1>
-<p class="pagina-sub">Tire suas dúvidas com a IA, a qualquer hora</p>
-
-<!-- Tela de limite diário atingido -->
-@if (limiteAtingido()) {
-  <div class="cartao-app limite">
-    <span class="limite-icone" aria-hidden="true">⏳</span>
-    <h2>Você usou suas {{ cotaTotal }} perguntas de hoje</h2>
-    <p>
-      O Ask.IA é gratuito, e o limite diário existe por causa da camada gratuita
-      da IA que usamos — não é cobrança.
-    </p>
-    <p class="limite-reinicio">
-      Sua cota reinicia à meia-noite ({{ horarioReinicio }}). Até lá, que tal revisar
-      seus flashcards?
-    </p>
+<header class="topo">
+  <div class="topo-titulo">
+    <h1>Ask IA</h1>
+    <span class="topo-sub">{{ cotaTotal }} perguntas por dia, grátis</span>
   </div>
-} @else {
+  <div class="topo-acoes">
+    <button type="button" class="btn-icone botao-historico" (click)="alternarHistorico()"
+            [attr.aria-expanded]="mostrarHistorico()" aria-controls="historico-estreito"
+            aria-label="Conversas anteriores" title="Conversas anteriores">
+      <app-icone nome="historico" [tamanho]="22" />
+    </button>
+    <button type="button" class="btn-contorno botao-nova" (click)="novaConversa()" [disabled]="!conversa()">
+      <app-icone nome="mais" [tamanho]="16" />
+      Nova conversa
+    </button>
+  </div>
+</header>
 
-  <div class="cartao-app chat">
+<div class="corpo">
+  <section class="principal" aria-label="Conversa com a IA">
 
-    <!-- Contador de perguntas restantes -->
-    <div class="cota" [class.cota-baixa]="(cotaRestante() ?? 0) <= 2">
-      @if (cotaRestante() !== null) {
-        {{ cotaRestante() }} de {{ cotaTotal }} perguntas restantes hoje
+      <div class="rolagem" #rolagem>
+        <div class="coluna">
+
+          @if (mostrarHistorico()) {
+            <div class="cartao-app historico-estreito" id="historico-estreito">
+              <h2 class="rotulo-secao">Conversas recentes</h2>
+              <app-lista-conversas [conversas]="recentes()" [atualId]="conversa()?.id ?? null" (abrir)="abrirConversa($event)" />
+            </div>
+          }
+
+          @if (mensagens().length === 0 && limiteAtingido()) {
+            <app-limite-diario [cotaTotal]="cotaTotal" [horarioReinicio]="horarioReinicio" />
+          } @else if (mensagens().length === 0) {
+            <div class="boas-vindas">
+              <h2>Qual é a sua dúvida?</h2>
+              <p>Escreva do jeito que você perguntaria ao professor. A resposta vem em passos numerados.</p>
+              <p class="rotulo-exemplos">Ou comece por um exemplo:</p>
+              <div class="exemplos">
+                @for (exemplo of exemplos; track exemplo) {
+                  <button type="button" class="exemplo" (click)="usarExemplo(exemplo)">{{ exemplo }}</button>
+                }
+              </div>
+            </div>
+          }
+
+          @for (msg of mensagens(); track $index; let i = $index) {
+            @if (msg.autor === 'aluno') {
+              <p class="bolha-aluno">{{ msg.texto }}</p>
+            } @else {
+              <app-resposta-ia [mensagem]="msg" [indice]="i" />
+            }
+          }
+
+          <!-- Esperando a IA -->
+          @if (pensandoAqui()) {
+            <div class="pensando" role="status">
+              <span class="pontos" aria-hidden="true"><span></span><span></span><span></span></span>
+              @switch (fasePensando()) {
+                @case (0) { <span class="so-leitor">A IA está montando a resposta.</span> }
+                @case (1) { <span>{{ textoDeEspera() }}</span> }
+                @case (2) {
+                  <span>Está demorando mais que o normal.</span>
+                  <button type="button" class="link-acao" (click)="cancelar()">Cancelar</button>
+                }
+              }
+            </div>
+          }
+
+          @if (erro()) {
+            <p class="msg-erro-app" id="erro-ask" role="alert">{{ erro() }}</p>
+          }
+
+          <p class="so-leitor" role="status">{{ anuncio() }}</p>
+        </div>
+      </div>
+
+      @if (limiteAtingido()) {
+        <!-- Limite: a conversa continua legível (reler não gasta cota); só o campo sai -->
+        @if (mensagens().length > 0) {
+          <div class="compositor">
+            <app-limite-diario [cotaTotal]="cotaTotal" [horarioReinicio]="horarioReinicio" [compacto]="true" />
+          </div>
+        }
       } @else {
-        Carregando sua cota...
-      }
-    </div>
-
-    <!-- Conversa -->
-    <div class="conversa" aria-live="polite">
-
-      @if (mensagens().length === 0) {
-        <div class="boas-vindas">
-          <p class="bolha bolha-ia">
-            Oi! Sobre qual matéria você quer tirar suas dúvidas hoje?
-          </p>
-          <div class="exemplos">
-            @for (exemplo of exemplos; track exemplo) {
-              <button type="button" class="exemplo" (click)="usarExemplo(exemplo)">
-                {{ exemplo }}
+      <!-- Campo fixo embaixo: o contador fica colado onde a decisão de perguntar acontece -->
+      <form class="compositor" (ngSubmit)="enviar()">
+        <div class="compositor-topo">
+          <div class="modos" role="group" aria-label="Tipo de ajuda">
+            @for (item of modos; track item) {
+              <button type="button" class="modo-botao" [attr.aria-pressed]="modo() === item"
+                      (click)="escolherModo(item)">
+                {{ nomeModo[item] }}
               </button>
             }
           </div>
+          <p class="cota" [class.cota-baixa]="cotaBaixa()">
+            <app-icone nome="ampulheta" [tamanho]="16" />
+            @if (cotaRestante() !== null) {
+              Restam {{ cotaRestante() }} de {{ cotaTotal }} hoje · renova às {{ horarioReinicio }}
+            } @else {
+              Carregando sua cota…
+            }
+          </p>
         </div>
-      }
 
-      @for (msg of mensagens(); track $index) {
-        @if (msg.autor === 'voce') {
-          <p class="bolha bolha-voce">{{ msg.texto }}</p>
-        } @else {
-          <div class="bolha bolha-ia resposta">
-            <ol class="passos">
-              @for (passo of msg.passos; track passo.titulo) {
-                <li>
-                  <strong>{{ passo.titulo }}</strong>
-                  <p>{{ passo.conteudo }}</p>
-                </li>
-              }
-            </ol>
-          </div>
-        }
-      }
-
-      <!-- Indicador de carregando -->
-      @if (carregando()) {
-        <div class="bolha bolha-ia pensando" aria-label="A IA está escrevendo">
-          <span class="ponto"></span><span class="ponto"></span><span class="ponto"></span>
+        <div class="compositor-linha">
+          <label for="campo-pergunta" class="so-leitor">Sua dúvida</label>
+          <textarea
+            #campoPergunta
+            id="campo-pergunta"
+            name="pergunta"
+            rows="1"
+            class="campo-pergunta"
+            [placeholder]="dicaDoCampo()"
+            [ngModel]="pergunta()"
+            (ngModelChange)="pergunta.set($event)"
+            (keydown.enter)="aoApertarEnter($event)"
+            [attr.aria-describedby]="erro() ? 'erro-ask' : null"
+          ></textarea>
+          <button type="submit" class="botao-enviar" [disabled]="carregando() || !pergunta().trim()"
+                  aria-label="Enviar pergunta">
+            <app-icone nome="enviar" />
+          </button>
         </div>
-      }
-    </div>
-
-    @if (erro()) {
-      <p class="msg-erro-app">{{ erro() }}</p>
+      </form>
     }
+  </section>
 
-    <!-- Campo de pergunta (autofocus: requisito da tela) -->
-    <form class="envio" (ngSubmit)="enviar()">
-      <textarea
-        #campoPergunta
-        name="pergunta"
-        rows="2"
-        placeholder="Digite sua pergunta..."
-        [(ngModel)]="pergunta"
-        [disabled]="carregando()"
-        autofocus
-      ></textarea>
-      <button type="submit" class="btn-acento" [disabled]="carregando() || !pergunta.trim()">
-        {{ carregando() ? '...' : 'Enviar' }}
-      </button>
-    </form>
-  </div>
-}
+  <!-- Tela larga: conversas recentes e o resumo do dia -->
+  <aside class="lateral" aria-label="Conversas e resumo do dia">
+    <section>
+      <h2 class="rotulo-secao">Conversas recentes</h2>
+      <app-lista-conversas [conversas]="recentes()" [atualId]="conversa()?.id ?? null" (abrir)="abrirConversa($event)" />
+    </section>
+
+    <section class="hoje">
+      <h2 class="rotulo-secao">Hoje</h2>
+      @if (ofensiva() !== null) {
+        <p class="hoje-linha">
+          <app-icone nome="fogo" />
+          <span><b>{{ ofensiva() }} {{ ofensiva() === 1 ? 'dia' : 'dias' }}</b> de ofensiva</span>
+        </p>
+      }
+      <p class="hoje-linha">
+        <app-icone nome="flashcards" />
+        <span class="hoje-cresce"><b>{{ cartoesParaRevisar() }} cartões</b> para revisar</span>
+        <a routerLink="/app/flashcards" class="link-acao">Revisar</a>
+      </p>
+    </section>
+  </aside>
+</div>

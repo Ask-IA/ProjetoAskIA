@@ -1,61 +1,73 @@
-<section id="inicio" class="w-full px-5 pb-20 pt-16 md:px-10 md:pb-28 md:pt-24">
-      <div class="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[1.02fr_.98fr]">
-        <div class="hero-copy">
-          <div class="mb-6 inline-flex items-center gap-3 rounded-full border border-sky-300/30 bg-sky-300/10 px-4 py-2 text-sm font-semibold">
-            <span class="eyebrow-dot h-2 w-2 rounded-full bg-sky-300"></span>
-            <span>Inteligência Artificial para Estudos</span>
-          </div>
-          <h1 class="heading-font max-w-3xl text-5xl font-semibold leading-[1.03] tracking-tight md:text-7xl">
-            Sua jornada de aprendizado impulsionada por IA
-          </h1>
-          <p class="mt-6 max-w-xl text-lg leading-relaxed text-slate-300 md:text-xl">
-            Crie cronogramas otimizados, resolva dúvidas complexas e pratique com questões personalizadas para acelerar sua aprovação.
-          </p>
-          <div class="mt-9 flex flex-col gap-3 sm:flex-row">
-            <a routerLink="/cadastro" class="inline-flex items-center justify-center gap-2 rounded-xl bg-sky-300 px-6 py-3.5 font-bold text-slate-950 transition hover:-translate-y-0.5 hover:brightness-110">
-              <span>Criar Conta Grátis</span>
-              <i data-lucide="arrow-right" width="18" height="18"></i>
-            </a>
-            <a href="#como-funciona" class="inline-flex items-center justify-center gap-2 rounded-xl border border-sky-200/20 px-6 py-3.5 font-bold transition hover:bg-sky-100/10">
-              <i data-lucide="play-circle" width="18" height="18"></i>
-              <span>Ver Como Funciona</span>
-            </a>
-          </div>
-          <div class="mt-10 flex flex-wrap gap-x-6 gap-y-3 text-sm font-medium text-sky-100/85">
-            <span class="flex items-center gap-2">
-              <i data-lucide="check-circle-2" class="text-sky-300" width="17" height="17"></i>
-              <span>Sem necessidade de cartão</span>
-            </span>
-            <span class="flex items-center gap-2">
-              <i data-lucide="check-circle-2" class="text-sky-300" width="17" height="17"></i>
-              <!-- Texto ajustado: "Plano gratuito para sempre" dava a entender que
-                   existem outros planos. O Ask.IA é gratuito por inteiro, sem plano pago. -->
-              <span>100% gratuito, sem plano pago</span>
-            </span>
-          </div>
-        </div>
+<section id="inicio" class="heroi">
+  <div class="heroi-texto">
+    <span class="selo">
+      <span class="pontos-areas" aria-hidden="true">
+        <span class="area-linguagens"></span><span class="area-humanas"></span><span class="area-natureza"></span><span class="area-matematica"></span>
+      </span>
+      Inteligência Artificial para Estudos
+    </span>
 
-        <div class="hero-visual relative mx-auto w-full max-w-xl">
-          <div class="absolute -inset-6 rounded-[2.5rem] bg-sky-500/20 blur-3xl"></div>
-          <div class="relative overflow-hidden rounded-[2rem] border border-sky-200/20 bg-slate-900 shadow-2xl shadow-blue-950/50">
-            <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1200&q=80" alt="Estudantes" class="h-[430px] w-full object-cover opacity-80 md:h-[520px]" loading="lazy">
-            <div class="absolute inset-0 bg-gradient-to-t from-[#07163b] via-[#07163b]/15 to-transparent"></div>
-            <!-- O card "Progresso do Módulo" saiu daqui (decisão da equipe):
-                 prometia um acompanhamento de módulo que o produto não tem.
-                 O acompanhamento real (Painel e Progresso) aparece no carrossel
-                 da seção Recursos. -->
-          </div>
-          <div class="orbit glass absolute -right-3 top-12 hidden rounded-2xl p-4 md:block">
-            <div class="flex items-center gap-3">
-              <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500/20 text-sky-200">
-                <i data-lucide="zap" width="19" height="19"></i>
-              </span>
-              <div>
-                <p class="text-sm font-bold">Feedback em Tempo Real</p>
-                <p class="mt-0.5 text-xs text-slate-300">Respostas geradas por IA</p>
-              </div>
-            </div>
-          </div>
-        </div>
+    <h1>Do “não entendi nada” ao <span class="grifo">“isso eu já sei”</span></h1>
+
+    <p class="subtitulo">
+      Tire dúvidas de qualquer matéria com explicações em passos, pratique e revise o que
+      ainda não fixou. Grátis, feito para quem vai fazer o ENEM.
+    </p>
+
+    <div class="botoes">
+      <a routerLink="/cadastro" class="btn-acento btn-grande">
+        Criar conta grátis
+        <app-icone nome="seta-direita" [tamanho]="19" />
+      </a>
+      <a href="#como-funciona" class="btn-tinta btn-grande">Ver como funciona</a>
+    </div>
+
+    <ul class="garantias">
+      <li><app-icone nome="check" [tamanho]="18" /> Sem necessidade de cartão</li>
+      <!-- "100% gratuito, sem plano pago": não existe versão paga do Ask.IA -->
+      <li><app-icone nome="check" [tamanho]="18" /> 100% gratuito, sem plano pago</li>
+    </ul>
+  </div>
+
+  <!-- Ilustração da tela do Ask IA (decorativa: o leitor de tela pula) -->
+  <div class="heroi-visual" aria-hidden="true">
+    <div class="demo-ask area-matematica">
+      <div class="demo-topo">
+        <b>Ask IA</b>
+        <span class="demo-modo">Explicar</span>
       </div>
-    </section>
+      <p class="demo-pergunta">Me explique função afim com um exemplo</p>
+      <div class="demo-etiquetas">
+        <span class="etiqueta-area"><span class="ponto-area"></span>Matemática</span>
+        <span class="demo-topico">Função afim</span>
+      </div>
+      <div class="demo-passo">
+        <span class="numero">1</span>
+        <div><b>O que é</b>Toda função da forma f(x) = ax + b, com a ≠ 0. O gráfico é sempre uma reta.</div>
+      </div>
+      <div class="demo-passo">
+        <span class="numero">2</span>
+        <div><b>O papel de cada letra</b>O a é a <span class="marca-texto">taxa de variação</span>; o b é onde a reta <span class="marca-texto">corta o eixo y</span>.</div>
+      </div>
+      <div class="demo-passo apagado">
+        <span class="numero">3</span>
+        <div><b>Exemplo</b>Um táxi cobra R$ 5,00 fixos mais R$ 2,00 por km…</div>
+      </div>
+    </div>
+
+    <div class="post-it">10 perguntas por dia, todo dia, de graça!</div>
+
+    <!-- Mesmo quadro que o Painel mostra (tópicos concluídos, não "acertos":
+         o app ainda não guarda acertos, e a landing não promete o que não faz) -->
+    <div class="demo-areas">
+      <b>Tópicos concluídos por área</b>
+      @for (item of demoAreas; track item.nome) {
+        <div class="demo-linha" [class]="item.classe">
+          <span>{{ item.nome }}</span>
+          <span class="trilha"><span [style.width.%]="item.valor"></span></span>
+          <b>{{ item.valor }}%</b>
+        </div>
+      }
+    </div>
+  </div>
+</section>

@@ -1,36 +1,61 @@
 <!-- src/app/pages/flashcards/flashcards.html -->
 
 <h1 class="pagina-titulo">Flashcards</h1>
-<p class="pagina-sub">Revise os conceitos em cartões — vire, responda e acompanhe seus acertos.</p>
+<p class="pagina-sub">Tente lembrar a resposta antes de virar o cartão. Depois, diga se acertou.</p>
 
 @if (carregando()) {
-  <p class="aviso">Carregando seus cartões...</p>
+  <p class="aviso">Carregando seus cartões…</p>
 } @else if (erro()) {
   <p class="msg-erro-app">{{ erro() }}</p>
 } @else if (terminou()) {
-  <div class="cartao-app resumo">
-    <h2>Revisão concluída! 🎉</h2>
-    <p>
-      Você acertou <strong class="ok">{{ acertos() }}</strong> e errou
-      <strong class="ruim">{{ erros() }}</strong> de {{ cartoes().length }} cartões.
+  <section class="cartao-app resumo">
+    <h2>Revisão concluída</h2>
+    <p class="placar">
+      <span class="placar-item acerto"><app-icone nome="check" [tamanho]="18" /> {{ acertos() }} {{ acertos() === 1 ? 'acerto' : 'acertos' }}</span>
+      <span class="placar-item erro"><app-icone nome="x" [tamanho]="18" /> {{ errados().length }} {{ errados().length === 1 ? 'erro' : 'erros' }}</span>
     </p>
-    <button type="button" class="btn-acento" (click)="reiniciar()">Revisar de novo</button>
-  </div>
-} @else if (atual(); as cartao) {
-  <div class="area">
-    <div class="progresso-cartoes">Cartão {{ indice() + 1 }} de {{ cartoes().length }}</div>
 
-    <button type="button" class="cartao-app carta" (click)="virar()"
-            [attr.aria-label]="virado() ? 'Ver pergunta' : 'Ver resposta'">
-      <small class="materia">{{ cartao.materia }}</small>
-      <p class="conteudo">{{ virado() ? cartao.verso : cartao.frente }}</p>
-      <small class="dica">{{ virado() ? 'Clique para voltar' : 'Clique para virar' }}</small>
+    @if (errados().length > 0) {
+      <div class="para-revisar">
+        <h3>Tire a dúvida do que você errou</h3>
+        <ul>
+          @for (cartao of errados(); track cartao.id) {
+            <li>
+              <span>{{ cartao.frente }}</span>
+              <a class="link-acao" routerLink="/app/ask" [queryParams]="{ pergunta: perguntaSobre(cartao) }">Perguntar ao Ask IA</a>
+            </li>
+          }
+        </ul>
+      </div>
+    }
+
+    <button type="button" class="btn-acento" (click)="reiniciar()">Revisar de novo</button>
+  </section>
+} @else if (atual(); as cartao) {
+  <div class="area-cartao">
+    <p class="contagem" aria-live="polite">Cartão {{ indice() + 1 }} de {{ cartoes().length }}</p>
+
+    <button type="button" class="cartao-app carta" [class]="classe()" (click)="virar()">
+      <span class="carta-topo">
+        @if (nomeArea()) {
+          <span class="etiqueta-area"><span class="ponto-area"></span>{{ cartao.materia }}</span>
+        } @else {
+          <span class="etiqueta-area">{{ cartao.materia }}</span>
+        }
+        <span class="lado">{{ virado() ? 'Resposta' : 'Pergunta' }}</span>
+      </span>
+      <span class="conteudo">{{ virado() ? cartao.verso : cartao.frente }}</span>
+      <span class="dica">{{ virado() ? 'Ver a pergunta de novo' : 'Ver a resposta' }}</span>
     </button>
 
     @if (virado()) {
-      <div class="acoes">
-        <button type="button" class="btn-resposta errei" (click)="responder(false)">Errei</button>
-        <button type="button" class="btn-resposta acertei" (click)="responder(true)">Acertei</button>
+      <div class="acoes" role="group" aria-label="Como foi?">
+        <button type="button" class="btn-resposta errei" (click)="responder(false)">
+          <app-icone nome="x" [tamanho]="18" /> Errei
+        </button>
+        <button type="button" class="btn-resposta acertei" (click)="responder(true)">
+          <app-icone nome="check" [tamanho]="18" /> Acertei
+        </button>
       </div>
     }
   </div>

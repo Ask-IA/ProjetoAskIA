@@ -1,0 +1,88 @@
+/* src/app/pages/ask-ia/resposta-ia/resposta-ia.css */
+
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.resposta {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 14px 16px 16px;
+  border: 1px solid var(--linha);
+  border-radius: var(--raio);
+  background: var(--cartao);
+  scroll-margin-top: 12px;
+}
+
+.resposta-topo { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
+.topico, .modo-usado { color: var(--texto-suave); font-size: .8125rem; font-weight: 600; }
+.modo-usado { margin-left: auto; font-weight: 500; }
+
+.passos { display: flex; flex-direction: column; gap: 14px; }
+.passo { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 12px; border-radius: 8px; }
+.passo:focus-visible { outline-offset: 4px; }
+
+/* número do passo no tom forte da área (no escuro, o tom claro) */
+.numero {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--area-forte);
+  color: var(--sobre-forte);
+  font-size: .8125rem;
+  font-weight: 700;
+}
+
+.passo h3 { margin: 3px 0 4px; font-size: 1rem; font-weight: 700; }
+/* o corpo usa --texto, não o cinza suave: é o texto que o aluno veio ler
+   (antes era #6B7280 sobre #E8E8E8 = 3,95:1, abaixo do mínimo) */
+.passo p { margin: 0; line-height: 1.6; overflow-wrap: break-word; }
+
+.formula {
+  margin-top: 8px;
+  padding: 9px 14px;
+  overflow-x: auto;
+  border-radius: var(--raio-pequeno);
+  background: var(--fundo);
+  font-family: 'Cambria Math', 'STIX Two Math', Georgia, serif;
+  font-size: 1.1875rem;
+  font-style: italic;
+}
+
+.revelar {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--linha);
+}
+.revelar p { margin: 0; color: var(--texto-suave); font-size: .9375rem; }
+
+.tente-voce {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 18px;
+  border: 1.5px dashed var(--borda-campo);
+  border-radius: 14px;
+  background: var(--cartao);
+}
+.tente-texto { display: flex; flex: 1; flex-direction: column; gap: 3px; }
+.tente-texto p { margin: 0; }
+.tente-texto .tente-resposta {
+  margin-top: 6px;
+  padding-top: 8px;
+  border-top: 1px solid var(--linha);
+  color: var(--texto-suave);
+}
+.tente-voce .link-acao { white-space: nowrap; }
+
+@media (min-width: 768px) {
+  .resposta { padding: 20px 22px; }
+}

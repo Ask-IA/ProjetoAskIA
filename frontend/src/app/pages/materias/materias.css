@@ -2,57 +2,76 @@
 
 .duas-colunas {
   display: grid;
-  grid-template-columns: 300px 1fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: 16px;
   align-items: start;
 }
-@media (max-width: 760px) { .duas-colunas { grid-template-columns: 1fr; } }
 
-.coluna-lista { display: flex; flex-direction: column; gap: 10px; }
+.coluna-lista { display: flex; flex-direction: column; gap: 8px; }
 
-.form-linha { display: flex; gap: 8px; margin-bottom: 6px; }
-.form-linha input {
-  flex: 1; border: 1px solid #D1D5DB; border-radius: 999px;
-  padding: 9px 14px; font-family: inherit; font-size: .92rem;
-}
+.form-linha { display: flex; gap: 8px; margin-bottom: 8px; }
+.form-linha .entrada { flex: 1; min-width: 0; }
 
 .item-materia {
-  display: flex; align-items: center; gap: 12px;
-  text-align: left; cursor: pointer; border: 2px solid transparent;
-  font-family: inherit; width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 14px 16px;
+  border: 1.5px solid var(--linha);
+  border-radius: 14px;
+  background: var(--cartao);
+  text-align: left;
 }
-.item-materia.selecionada { border-color: var(--acento); }
-.item-materia .info { flex: 1; display: flex; flex-direction: column; }
-.item-materia strong { color: var(--texto); }
-.item-materia small { color: var(--texto-suave); }
+.item-materia:hover { border-color: var(--borda-campo); }
+/* selecionada: borda na cor de ação E fundo suave (não depende só da cor da borda) */
+.item-materia.selecionada { border-color: var(--acento); background: var(--acento-suave); }
+.info { display: flex; flex: 1; flex-direction: column; min-width: 0; }
+.info small { color: var(--texto-suave); font-size: .8125rem; }
 
-.pilula { width: 10px; height: 26px; border-radius: 6px; display: inline-block; }
+.detalhe-topo { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-bottom: 16px; }
+.detalhe-topo h2 { margin: 0; font-size: 1.375rem; font-weight: 700; }
 
-.coluna-detalhe h2 {
-  display: flex; align-items: center; gap: 10px;
-  margin: 0 0 16px; color: var(--texto);
-}
-
+.topicos { display: flex; flex-direction: column; gap: 8px; }
 .topico {
-  display: flex; align-items: center; justify-content: space-between;
-  border: 1px solid #E5E7EB; border-radius: 8px;
-  padding: 10px 12px; margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 6px 6px 14px;
+  border: 1px solid var(--linha);
+  border-radius: 12px;
 }
-.topico label { display: flex; align-items: center; gap: 10px; cursor: pointer; }
-.topico span { display: flex; flex-direction: column; color: var(--texto); }
-.topico small { color: var(--texto-suave); }
-.topico .feito { text-decoration: line-through; color: var(--texto-suave); }
-.remover { background: none; border: none; cursor: pointer; font-size: 1rem; }
+.topico label { display: flex; flex: 1; align-items: center; gap: 12px; min-height: 44px; }
+.topico input { width: 20px; height: 20px; accent-color: var(--acento); flex-shrink: 0; }
+.topico-texto { display: flex; flex-direction: column; }
+.topico-texto small { color: var(--texto-suave); font-size: .8125rem; }
+.topico-texto.feito .nome-topico { color: var(--texto-suave); text-decoration: line-through; }
 
-.vazio { color: var(--texto-suave); }
-
-.temporizador { margin-top: 28px; text-align: center; }
-.temporizador h3 { color: var(--texto); margin-bottom: 12px; }
+.temporizador { margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--linha); text-align: center; }
+.temporizador h3 { margin: 0 0 6px; font-size: 1.05rem; font-weight: 700; }
 .mostrador {
-  background: #000; color: #fff;
-  font-size: 2.6rem; font-weight: 700;
-  border-radius: 14px; padding: 18px 0;
-  max-width: 320px; margin: 0 auto 14px;
+  max-width: 320px;
+  margin: 10px auto 14px;
+  padding: 16px 0;
+  border: 1px solid var(--linha);
+  border-radius: 14px;
+  background: var(--fundo);
+  font-size: 2.6rem;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
-.controles { display: flex; gap: 10px; justify-content: center; }
+.controles { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+.terminou p { margin: 0 0 12px; font-weight: 600; }
+.confirmacao {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 14px 0 0;
+  color: var(--sucesso);
+  font-weight: 600;
+}
+
+@media (min-width: 900px) {
+  .duas-colunas { grid-template-columns: 300px minmax(0, 1fr); }
+}

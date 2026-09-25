@@ -1,66 +1,179 @@
-/* src/app/pages/ask-ia/ask-ia.css */
+/* src/app/pages/ask-ia/ask-ia.css
+   A tela ocupa a altura toda: a conversa rola por dentro e o campo fica fixo embaixo. */
 
-.chat { display: flex; flex-direction: column; gap: 14px; min-height: 60vh; }
-
-.cota {
-  align-self: flex-end;
-  font-size: .85rem;
-  color: var(--texto-suave);
-  background: var(--fundo);
-  border-radius: 999px;
-  padding: 6px 14px;
+:host {
+  display: flex;
+  flex-direction: column;
+  height: calc(100dvh - var(--altura-barra-celular));
 }
-.cota-baixa { color: var(--alerta); font-weight: 600; }
 
-.conversa { display: flex; flex-direction: column; gap: 12px; flex: 1; }
+/* ---------- Topo ---------- */
 
-.bolha {
-  max-width: 78%;
-  padding: 12px 16px;
-  border-radius: 14px;
-  margin: 0;
-  line-height: 1.5;
+.topo {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 56px;
+  padding: 6px 8px 6px 18px;
+  border-bottom: 1px solid var(--linha);
+  background: var(--cartao);
 }
-.bolha-ia { background: var(--fundo); color: var(--texto); align-self: flex-start; }
-.bolha-voce { background: var(--acento); color: #fff; align-self: flex-end; }
+.topo-titulo { display: flex; align-items: baseline; gap: 14px; }
+.topo h1 { margin: 0; font-size: 1.2rem; font-weight: 700; }
+.topo-sub { display: none; color: var(--texto-suave); font-size: .875rem; }
+.topo-acoes { display: flex; align-items: center; gap: 6px; }
+.botao-nova { min-height: 40px; padding: 6px 14px; font-size: .875rem; }
+.botao-historico[aria-expanded="true"] { background: var(--menu-ativo-fundo); color: var(--menu-ativo-texto); }
 
-.resposta { max-width: 92%; }
-.passos { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 10px; }
-.passos p { margin: 4px 0 0; color: var(--texto-suave); }
+/* ---------- Corpo: conversa + lateral ---------- */
 
+.corpo { display: flex; flex: 1; min-height: 0; }
+.principal { display: flex; flex: 1; flex-direction: column; min-width: 0; }
+.rolagem { flex: 1; overflow-y: auto; padding: 16px 16px 20px; }
+.coluna { display: flex; flex-direction: column; gap: 14px; max-width: 680px; margin: 0 auto; }
+.lateral { display: none; }
+
+.boas-vindas h2 { margin: 4px 0 6px; font-size: 1.375rem; font-weight: 700; }
+.boas-vindas p { color: var(--texto-suave); }
+.boas-vindas .rotulo-exemplos { margin-top: 18px; color: var(--texto); font-size: .875rem; font-weight: 600; }
 .exemplos { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
 .exemplo {
-  border: 1px solid var(--acento);
-  color: var(--acento);
-  background: transparent;
+  padding: 9px 14px;
+  border: 1.5px solid var(--acento);
   border-radius: 999px;
-  padding: 8px 14px;
-  font-family: inherit;
-  font-size: .88rem;
-  cursor: pointer;
-  transition: background .2s;
+  background: var(--cartao);
+  color: var(--acento);
+  font-size: .9375rem;
+  text-align: left;
 }
-.exemplo:hover { background: rgba(29, 78, 216, .08); }
+.exemplo:hover { background: var(--acento-suave); }
 
-.pensando { display: flex; gap: 5px; padding: 14px 18px; }
-.ponto {
-  width: 8px; height: 8px; border-radius: 50%;
-  background: var(--texto-suave);
-  animation: pulsar 1s infinite ease-in-out;
-}
-.ponto:nth-child(2) { animation-delay: .18s; }
-.ponto:nth-child(3) { animation-delay: .36s; }
-@keyframes pulsar { 50% { opacity: .3; transform: translateY(-3px); } }
-
-.envio { display: flex; gap: 10px; align-items: flex-end; }
-.envio textarea {
-  flex: 1; resize: none;
-  border: 1px solid #D1D5DB; border-radius: 10px;
-  padding: 10px 12px; font-family: inherit; font-size: .95rem;
+/* Bolha só na pergunta do aluno; a resposta fica no papel, sem caixa dentro de caixa */
+.bolha-aluno {
+  align-self: flex-end;
+  max-width: 82%;
+  padding: 10px 14px;
+  border-radius: 18px 18px 6px 18px;
+  background: var(--bolha-aluno);
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
 }
 
-.limite { text-align: center; padding: 48px 24px; }
-.limite-icone { font-size: 2.4rem; }
-.limite h2 { color: var(--texto); margin: 12px 0 8px; }
-.limite p { color: var(--texto-suave); max-width: 46ch; margin: 6px auto; }
-.limite-reinicio { font-weight: 600; }
+.pensando {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  align-self: flex-start;
+  gap: 10px 12px;
+  padding: 12px 16px;
+  border: 1px solid var(--linha);
+  border-radius: 14px;
+  background: var(--cartao);
+  color: var(--texto-suave);
+  font-size: .9375rem;
+}
+
+/* ---------- Campo fixo embaixo ---------- */
+
+.compositor {
+  display: flex;
+  flex-shrink: 0;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 14px 12px;
+  border-top: 1px solid var(--linha);
+  background: var(--cartao);
+}
+.compositor-topo, .compositor-linha { width: 100%; max-width: 680px; margin: 0 auto; }
+.compositor-topo { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.modos { display: flex; gap: 6px; }
+.modo-botao {
+  min-height: 36px;
+  padding: 6px 13px;
+  border: 1.5px solid var(--borda-campo);
+  border-radius: 999px;
+  background: var(--cartao);
+  font-size: .8125rem;
+  font-weight: 600;
+}
+.modo-botao[aria-pressed="true"] { border-color: var(--acento); background: var(--acento); color: var(--acento-texto); }
+
+/* No celular o contador vem primeiro, acima dos modos */
+.cota {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  order: -1;
+  width: 100%;
+  color: var(--texto-suave);
+  font-size: .8125rem;
+  font-weight: 600;
+}
+/* Cota baixa: texto escuro e em negrito. Antes era âmbar claro (1,75:1) e sumia justo quando importava */
+.cota-baixa { color: var(--texto); font-weight: 700; }
+
+.compositor-linha { display: flex; align-items: flex-end; gap: 8px; }
+.campo-pergunta {
+  flex: 1;
+  min-width: 0;
+  min-height: 46px;
+  max-height: 160px;
+  padding: 11px 14px;
+  border: 1.5px solid var(--borda-campo);
+  border-radius: 14px;
+  background: var(--cartao);
+  font-size: 1rem;
+  line-height: 1.4;
+  resize: none;
+  field-sizing: content;
+}
+.campo-pergunta::placeholder { color: var(--rotulo); }
+.botao-enviar {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: var(--acento);
+  color: var(--acento-texto);
+}
+.botao-enviar:hover:not(:disabled) { background: var(--acento-hover); }
+.botao-enviar:disabled { opacity: .45; cursor: not-allowed; }
+
+/* ---------- Bloco "Hoje" (tela larga) ---------- */
+
+.hoje { display: flex; flex-direction: column; gap: 12px; padding: 16px; border-radius: 14px; background: var(--fundo); }
+.hoje-linha { display: flex; align-items: center; gap: 10px; font-size: .875rem; }
+.hoje-cresce { flex: 1; }
+
+/* ---------- Computador ---------- */
+
+@media (min-width: 768px) {
+  :host { height: 100dvh; }
+  .topo { min-height: 68px; padding: 0 24px 0 32px; }
+  .topo h1 { font-size: 1.375rem; }
+  .topo-sub { display: inline; }
+  .rolagem { padding: 24px 40px; }
+  .bolha-aluno { max-width: 78%; padding: 12px 16px; }
+  .compositor { padding: 14px 40px 20px; }
+  .modo-botao { padding: 7px 14px; font-size: .875rem; }
+  .cota { order: 0; width: auto; margin-left: auto; }
+}
+
+@media (min-width: 1200px) {
+  .botao-historico, .historico-estreito { display: none; }
+  .lateral {
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    gap: 22px;
+    width: 288px;
+    padding: 24px 20px;
+    overflow-y: auto;
+    border-left: 1px solid var(--linha);
+    background: var(--cartao);
+  }
+}

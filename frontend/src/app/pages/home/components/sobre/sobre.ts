@@ -1,8 +1,9 @@
 import { Component } from '@angular/core';
+import { Icone } from '../../../../shared/icone';
 
 @Component({
   selector: 'app-sobre',
-  imports: [],
+  imports: [Icone],
   templateUrl: './sobre.html',
   styleUrl: './sobre.css',
 })

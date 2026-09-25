@@ -3,20 +3,32 @@
 // Quiz por matéria (ainda com DADOS FALSOS).
 // O que chega de forma assíncrona (lista de matérias, questões "geradas"
 // pela IA) fica em signals — no modo zoneless é o que faz a tela redesenhar.
+//
+// Mudanças de 24/09:
+// - certo e errado com ícone e TEXTO ("Resposta certa", "Sua resposta"),
+//   não só borda verde e vermelha (WCAG 1.4.1; o daltonismo mais comum
+//   confunde justamente vermelho e verde);
+// - uma linha de explicação por questão;
+// - no resultado, um botão leva aos flashcards.
 
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { QuestaoQuiz, RevisaoService } from '../../services/revisao.service';
+import { Icone } from '../../shared/icone';
 
 @Component({
   selector: 'app-quiz',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, RouterLink, Icone],
   templateUrl: './quiz.html',
   styleUrl: './quiz.css',
+  host: { class: 'pagina' },
 })
 export class Quiz implements OnInit {
   private revisao = inject(RevisaoService);
+
+  readonly letras = ['A', 'B', 'C', 'D', 'E'];
 
   materias = signal<string[]>([]);
   questoes = signal<QuestaoQuiz[]>([]);
@@ -29,10 +41,11 @@ export class Quiz implements OnInit {
   respondida = signal(false);
   acertos = signal(0);
 
-  // ligado ao [(ngModel)] do <select>
-  materiaEscolhida: string | null = null;
+  materiaEscolhida = signal<string | null>(null);
 
   atual = computed<QuestaoQuiz | null>(() => this.questoes()[this.indice()] ?? null);
+  acertouAtual = computed(() => this.respostaSelecionada() === this.atual()?.correta);
+  foiBem = computed(() => this.acertos() >= this.questoes().length * 0.7);
 
   ngOnInit(): void {
     this.revisao.materiasComQuiz().subscribe({
@@ -42,11 +55,12 @@ export class Quiz implements OnInit {
   }
 
   gerar(): void {
-    if (!this.materiaEscolhida) return;
+    const materia = this.materiaEscolhida();
+    if (!materia) return;
     this.gerando.set(true);
     this.erro.set('');
 
-    this.revisao.gerarQuiz(this.materiaEscolhida).subscribe({
+    this.revisao.gerarQuiz(materia).subscribe({
       next: questoes => {
         this.questoes.set(questoes);
         this.gerando.set(false);
@@ -66,7 +80,7 @@ export class Quiz implements OnInit {
   confirmar(): void {
     if (this.respostaSelecionada() === null || this.respondida()) return;
     this.respondida.set(true);
-    if (this.respostaSelecionada() === this.atual()?.correta) {
+    if (this.acertouAtual()) {
       this.acertos.update(n => n + 1);
     }
   }
@@ -84,6 +98,6 @@ export class Quiz implements OnInit {
   refazer(): void {
     this.questoes.set([]);
     this.terminou.set(false);
-    this.materiaEscolhida = null;
+    this.materiaEscolhida.set(null);
   }
 }

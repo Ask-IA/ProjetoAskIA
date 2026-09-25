@@ -1,0 +1,150 @@
+/* Herói da landing: texto à esquerda, ilustração do Ask IA à direita (no celular, embaixo) */
+
+.heroi {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  max-width: 1280px; /* 1200 de conteúdo + 40 de respiro de cada lado */
+  margin: 0 auto;
+  padding: 22px 20px 44px;
+}
+
+.heroi-texto { display: flex; flex-direction: column; gap: 18px; }
+
+.selo {
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px 6px 10px;
+  border: 1px solid var(--linha);
+  border-radius: 999px;
+  background: var(--cartao);
+  font-size: .8125rem;
+  font-weight: 600;
+}
+.pontos-areas { display: flex; gap: 3px; }
+.pontos-areas span { width: 7px; height: 7px; border-radius: 50%; background: var(--area); }
+
+h1 {
+  margin: 0;
+  font-family: "Fraunces", Georgia, serif;
+  font-size: 2.375rem;
+  font-weight: 700;
+  line-height: 1.08;
+  letter-spacing: -.01em;
+}
+
+.subtitulo { margin: 0; color: var(--texto-suave); font-size: 1.0625rem; line-height: 1.55; }
+
+.botoes { display: flex; flex-direction: column; gap: 10px; margin-top: 4px; }
+
+.garantias { display: flex; flex-direction: column; gap: 8px; font-size: .9375rem; font-weight: 500; }
+.garantias li { display: flex; align-items: center; gap: 8px; }
+
+/* ---- Ilustração ---- */
+
+.heroi-visual { position: relative; width: 100%; max-width: 560px; height: 400px; }
+
+.demo-ask {
+  position: absolute;
+  top: 34px;
+  left: 0;
+  right: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px;
+  border: 1px solid var(--linha);
+  border-radius: 18px;
+  background: var(--cartao);
+  box-shadow: var(--sombra-flutuante);
+}
+.demo-topo { display: flex; align-items: center; justify-content: space-between; }
+.demo-modo { padding: 3px 10px; border-radius: 999px; background: var(--acento); color: var(--acento-texto); font-size: .75rem; font-weight: 600; }
+.demo-pergunta {
+  align-self: flex-end;
+  max-width: 86%;
+  margin: 0;
+  padding: 9px 12px;
+  border-radius: 14px 14px 5px 14px;
+  background: var(--bolha-aluno);
+  font-size: .9rem;
+}
+.demo-etiquetas { display: flex; align-items: center; gap: 8px; }
+.demo-etiquetas .etiqueta-area { padding: 3px 10px; font-size: .75rem; }
+.demo-topico { color: var(--texto-suave); font-size: .75rem; font-weight: 600; }
+.demo-passo { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: 9px; font-size: .9rem; line-height: 1.55; }
+.demo-passo b { display: block; margin: 2px 0 3px; }
+.numero {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--area-forte);
+  color: var(--sobre-forte);
+  font-size: .75rem;
+  font-weight: 700;
+}
+.apagado { display: none; opacity: .55; }
+
+/* Post-it amarelo: a mesma cor do marca-texto, escrito "à mão" */
+.post-it {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 150px;
+  padding: 13px 14px 15px;
+  background: var(--marca-texto);
+  color: var(--marca-texto-tinta);
+  box-shadow: var(--sombra-flutuante);
+  font-family: "Caveat", "Comic Sans MS", cursive;
+  font-size: 1.4375rem;
+  font-weight: 700;
+  line-height: 1.05;
+  transform: rotate(5deg);
+}
+
+.demo-areas { display: none; }
+
+@media (min-width: 1024px) {
+  .heroi {
+    display: grid;
+    grid-template-columns: 1.05fr .95fr;
+    gap: 64px;
+    align-items: center;
+    padding: 48px 40px 88px;
+  }
+  .heroi-texto { gap: 24px; }
+  h1 { font-size: 4rem; line-height: 1.04; letter-spacing: -.015em; }
+  .subtitulo { max-width: 540px; font-size: 1.1875rem; }
+  .botoes { flex-direction: row; gap: 14px; margin-top: 8px; }
+  .garantias { flex-direction: row; gap: 26px; }
+
+  .heroi-visual { max-width: none; height: 520px; }
+  .demo-ask { right: auto; width: min(500px, 92%); gap: 14px; padding: 22px 24px; border-radius: 20px; }
+  .apagado { display: grid; }
+  .post-it { width: 196px; padding: 18px 18px 20px; font-size: 1.75rem; transform: rotate(4deg); }
+
+  .demo-areas {
+    position: absolute;
+    right: 16px;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    width: 280px;
+    padding: 16px 18px;
+    border: 1px solid var(--linha);
+    border-radius: 16px;
+    background: var(--cartao);
+    box-shadow: var(--sombra-flutuante);
+    font-size: .875rem;
+  }
+  .demo-linha { display: grid; grid-template-columns: 84px minmax(0, 1fr) 34px; gap: 8px; align-items: center; font-size: .78rem; }
+  .demo-linha b { text-align: right; }
+  .trilha { display: flex; height: 7px; border-radius: 4px; background: var(--trilha); }
+  .trilha span { border-radius: 4px; background: var(--area); }
+}

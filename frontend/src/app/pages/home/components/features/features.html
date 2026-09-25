@@ -1,59 +1,53 @@
-<section id="recursos" class="w-full px-5 py-20 md:px-10">
-  <div class="mx-auto max-w-7xl">
+<section id="recursos" class="secao recursos">
+  <div class="conteudo-secao">
 
-    <div class="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
-      <div class="max-w-2xl">
-        <p class="text-sm font-bold uppercase tracking-[0.18em] text-sky-300">Recursos Principais</p>
-        <h2 class="heading-font mt-3 text-4xl font-semibold leading-tight md:text-5xl">
-          Tudo o que você precisa para dominar matérias complexas
-        </h2>
-        <p class="mt-4 text-lg leading-relaxed text-slate-300">
-          São sete áreas dentro do app, e todas trabalham juntas: o que você erra no quiz
-          vira revisão, e o que você estuda aparece no seu progresso.
-        </p>
+    <div class="cabeca-secao">
+      <span class="sobretitulo">Recursos principais</span>
+      <h2 class="titulo-landing">Tudo o que você precisa para dominar matérias complexas</h2>
+      <p class="texto-landing">
+        São sete seções dentro do app, e todas trabalham juntas: o que você estuda aparece
+        no seu progresso, e o Painel mostra onde vale focar.
+      </p>
+    </div>
+
+    <div class="grade">
+      <!-- O Ask IA ganha o cartão escuro: é o produto (data-tema="escuro" usa as cores do modo escuro) -->
+      <article class="cartao-ask" data-tema="escuro">
+        <div class="ask-texto">
+          <span class="quadro-icone"><app-icone nome="brilho" [tamanho]="22" /></span>
+          <h3>Ask IA</h3>
+          <p>Tire dúvidas de qualquer matéria e receba a explicação dividida em passos, não só a resposta pronta.</p>
+          <a routerLink="/cadastro" class="link-acao">Experimentar agora</a>
+        </div>
+        <div class="ask-demo area-matematica" aria-hidden="true">
+          <span class="etiqueta-area"><span class="ponto-area"></span>Matemática</span>
+          <p><span class="numero">1</span><span>O a é a <span class="marca-texto">taxa de variação</span> da reta.</span></p>
+          <p class="so-computador"><span class="numero">2</span><span>O b é onde ela corta o eixo y.</span></p>
+        </div>
+      </article>
+
+      <!-- No celular: carrossel com as bolinhas. No computador: grade (display: contents). -->
+      <div class="trilho" #trilho (scroll)="aoRolar()">
+        @for (recurso of recursos; track recurso.titulo) {
+          <article class="cartao-recurso">
+            <span class="quadro-icone"><app-icone [nome]="recurso.icone" [tamanho]="22" /></span>
+            <h3>{{ recurso.titulo }}</h3>
+            <p>{{ recurso.descricao }}</p>
+            <span class="exemplo">{{ recurso.exemplo }}</span>
+          </article>
+        }
       </div>
 
-      <!-- Setas do carrossel (escondidas no celular, onde o arrastar já resolve) -->
-      <div class="hidden shrink-0 gap-3 md:flex">
-        <button type="button" (click)="anterior()" [disabled]="indiceAtivo === 0"
-                class="seta flex h-11 w-11 items-center justify-center rounded-xl border border-sky-200/20 text-sky-100 transition hover:bg-sky-100/10"
-                aria-label="Ver recurso anterior">
-          <i data-lucide="chevron-left" width="20" height="20"></i>
-        </button>
-        <button type="button" (click)="proximo()" [disabled]="indiceAtivo === recursos.length - 1"
-                class="seta flex h-11 w-11 items-center justify-center rounded-xl border border-sky-200/20 text-sky-100 transition hover:bg-sky-100/10"
-                aria-label="Ver próximo recurso">
-          <i data-lucide="chevron-right" width="20" height="20"></i>
-        </button>
+      <div class="navegacao-celular">
+        <span class="bolinhas">
+          @for (recurso of recursos; track recurso.titulo; let i = $index) {
+            <button type="button" class="bolinha" [class.ativa]="i === indiceAtivo()" (click)="irPara(i)"
+                    [attr.aria-label]="'Ver ' + recurso.titulo"
+                    [attr.aria-current]="i === indiceAtivo() ? 'true' : null"><span></span></button>
+          }
+        </span>
+        <span>Deslize para ver os {{ recursos.length }} recursos</span>
       </div>
     </div>
-
-    <!-- Trilho do carrossel: rola na horizontal e "encaixa" em cada cartão -->
-    <div #trilho (scroll)="aoRolar()" class="carrossel mt-10 flex gap-5 overflow-x-auto pb-4">
-      @for (recurso of recursos; track recurso.titulo) {
-        <article class="glass feature-card cartao shrink-0 rounded-2xl p-7">
-          <span class="mb-8 flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-300/15 text-sky-200">
-            <i [attr.data-lucide]="recurso.icone" width="24" height="24"></i>
-          </span>
-          <h3 class="text-xl font-bold">{{ recurso.titulo }}</h3>
-          <p class="mt-3 leading-relaxed text-slate-300">{{ recurso.descricao }}</p>
-          <p class="mt-5 rounded-xl border border-sky-200/15 bg-sky-300/5 px-4 py-3 text-sm text-sky-100/80">
-            {{ recurso.exemplo }}
-          </p>
-        </article>
-      }
-    </div>
-
-    <!-- Bolinhas de navegação -->
-    <div class="mt-2 flex justify-center gap-2">
-      @for (recurso of recursos; track recurso.titulo; let i = $index) {
-        <button type="button" (click)="irPara(i)"
-                class="bolinha h-2 rounded-full transition-all"
-                [class.ativa]="i === indiceAtivo"
-                [attr.aria-label]="'Ir para ' + recurso.titulo"
-                [attr.aria-current]="i === indiceAtivo ? 'true' : null"></button>
-      }
-    </div>
-
   </div>
 </section>

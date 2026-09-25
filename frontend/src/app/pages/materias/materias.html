@@ -1,7 +1,7 @@
 <!-- src/app/pages/materias/materias.html -->
 
-<h1 class="pagina-titulo">Suas Matérias</h1>
-<p class="pagina-sub">Cadastre sua matéria aqui e organize os tópicos</p>
+<h1 class="pagina-titulo">Matérias</h1>
+<p class="pagina-sub">Cadastre suas matérias e quebre cada uma em tópicos.</p>
 
 @if (erro()) {
   <p class="msg-erro-app">{{ erro() }}</p>
@@ -12,91 +12,108 @@
   <!-- Lista de matérias -->
   <div class="coluna-lista">
     <form class="form-linha" (ngSubmit)="adicionarMateria()">
-      <input
-        name="novaMateria"
-        placeholder="Nova matéria (ex: Química)"
-        [(ngModel)]="novaMateria"
-      />
-      <button type="submit" class="btn-claro">Adicionar</button>
+      <label for="nova-materia" class="so-leitor">Nova matéria</label>
+      <input id="nova-materia" name="novaMateria" class="entrada" placeholder="Nova matéria"
+             [ngModel]="novaMateria()" (ngModelChange)="novaMateria.set($event)" />
+      <button type="submit" class="btn-contorno" [disabled]="!novaMateria().trim()">Adicionar</button>
     </form>
 
     @if (carregando()) {
-      <p class="vazio">Carregando suas matérias...</p>
+      <p class="aviso">Carregando suas matérias…</p>
     }
 
     @for (materia of materias(); track materia.id) {
-      <button
-        type="button"
-        class="cartao-app item-materia"
-        [class.selecionada]="materia.id === selecionada()?.id"
-        (click)="selecionar(materia)"
-      >
-        <span class="pilula" [style.background]="materia.cor"></span>
+      <button type="button" class="item-materia" [class]="classeArea(area(materia))"
+              [class.selecionada]="materia.id === selecionada()?.id"
+              [attr.aria-pressed]="materia.id === selecionada()?.id"
+              (click)="selecionar(materia)">
+        <span class="ponto-area"></span>
         <span class="info">
           <strong>{{ materia.nome }}</strong>
-          <small>{{ materia.topicos.length }} tópicos</small>
+          <small>{{ nomeArea(materia) }} · {{ materia.topicos.length }} {{ materia.topicos.length === 1 ? 'tópico' : 'tópicos' }}</small>
         </span>
-        <span aria-hidden="true">›</span>
       </button>
     }
   </div>
 
   <!-- Detalhe da matéria selecionada -->
-  <div class="cartao-app coluna-detalhe">
+  <section class="cartao-app coluna-detalhe">
     @if (selecionada(); as materia) {
-      <h2>
-        <span class="pilula" [style.background]="materia.cor"></span>
-        {{ materia.nome }}
-      </h2>
+      <div class="detalhe-topo" [class]="classeArea(area(materia))">
+        <h2>{{ materia.nome }}</h2>
+        <span class="etiqueta-area"><span class="ponto-area"></span>{{ nomeArea(materia) }}</span>
+      </div>
 
       <form class="form-linha" (ngSubmit)="adicionarTopico()">
-        <input
-          name="novoTopico"
-          placeholder="Adicione um tópico (ex: equação)"
-          [(ngModel)]="novoTopico"
-        />
-        <button type="submit" class="btn-claro">Adicionar</button>
+        <label for="novo-topico" class="so-leitor">Novo tópico de {{ materia.nome }}</label>
+        <input id="novo-topico" name="novoTopico" class="entrada" placeholder="Novo tópico (ex.: equação do 2º grau)"
+               [ngModel]="novoTopico()" (ngModelChange)="novoTopico.set($event)" />
+        <button type="submit" class="btn-contorno" [disabled]="!novoTopico().trim()">Adicionar</button>
       </form>
 
-      @for (topico of materia.topicos; track topico.id) {
-        <div class="topico">
-          <label>
-            <input
-              type="checkbox"
-              [checked]="topico.concluido"
-              (change)="alternarTopico(topico.id)"
-            />
-            <span [class.feito]="topico.concluido">
-              {{ topico.nome }}
-              <small>{{ topico.concluido ? 'Concluído' : 'Pendente' }}</small>
-            </span>
-          </label>
-          <button
-            type="button"
-            class="remover"
-            (click)="removerTopico(topico.id)"
-            attr.aria-label="Remover tópico {{ topico.nome }}"
-          >🗑</button>
-        </div>
-      } @empty {
-        <p class="vazio">Nenhum tópico ainda — adicione o primeiro acima.</p>
-      }
+      <ul class="topicos">
+        @for (topico of topicosVisiveis(); track topico.id) {
+          <li class="topico">
+            <label>
+              <input type="checkbox" [checked]="topico.concluido" (change)="alternarTopico(topico.id)" />
+              <span class="topico-texto" [class.feito]="topico.concluido">
+                <span class="nome-topico">{{ topico.nome }}</span>
+                <small>{{ topico.concluido ? 'Concluído' : 'Pendente' }}</small>
+              </span>
+            </label>
+            <button type="button" class="btn-icone" (click)="removerTopico(topico)"
+                    [attr.aria-label]="'Remover o tópico ' + topico.nome" title="Remover tópico">
+              <app-icone nome="lixeira" [tamanho]="18" />
+            </button>
+          </li>
+        } @empty {
+          <li class="aviso">Nenhum tópico ainda. Adicione o primeiro acima.</li>
+        }
+      </ul>
 
       <!-- Temporizador de Estudos -->
       <div class="temporizador">
-        <h3>Temporizador de Estudos</h3>
-        <div class="mostrador">{{ tempoFormatado() }}</div>
-        <div class="controles">
-          @if (!rodando()) {
-            <button type="button" class="btn-acento" (click)="comecar()">Começar</button>
-          } @else {
-            <button type="button" class="btn-acento" (click)="pausar()">Pausar</button>
-          }
-          <button type="button" class="btn-claro" (click)="zerar()">Zerar</button>
-        </div>
+        <h3>Temporizador de estudos</h3>
+        @if (materiaDoTemporizador(); as emFoco) {
+          <p class="aviso">Estudando: {{ emFoco.nome }}</p>
+        }
+        <div class="mostrador" role="timer" aria-live="off">{{ tempoFormatado() }}</div>
+
+        @if (terminou() && materiaDoTemporizador(); as emFoco) {
+          <div class="terminou" role="status">
+            <p>Terminou! Quer registrar 25 min de {{ emFoco.nome }} no Cronograma?</p>
+            <div class="controles">
+              <button type="button" class="btn-acento" (click)="registrarSessao()">Registrar sessão</button>
+              <button type="button" class="btn-contorno" (click)="zerar()">Agora não</button>
+            </div>
+          </div>
+        } @else {
+          <div class="controles">
+            @if (!rodando()) {
+              <button type="button" class="btn-acento" (click)="comecar()">Começar</button>
+            } @else {
+              <button type="button" class="btn-acento" (click)="pausar()">Pausar</button>
+            }
+            <button type="button" class="btn-contorno" (click)="zerar()">Zerar</button>
+          </div>
+        }
+
+        @if (sessaoRegistrada()) {
+          <p class="confirmacao" role="status">
+            <app-icone nome="check" [tamanho]="18" />
+            {{ sessaoRegistrada() }}
+          </p>
+        }
       </div>
-    } @else {
-      <p class="vazio">Selecione ou cadastre uma matéria para começar.</p>
+    } @else if (!carregando()) {
+      <p class="aviso">Selecione ou cadastre uma matéria para começar.</p>
     }
-  </div>
+  </section>
 </div>
+
+@if (removendo(); as pendente) {
+  <div class="aviso-desfazer" role="status">
+    <span>Tópico "{{ pendente.topico.nome }}" removido</span>
+    <button type="button" (click)="desfazerRemocao()">Desfazer</button>
+  </div>
+}

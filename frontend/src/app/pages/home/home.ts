@@ -1,20 +1,24 @@
 import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { AppHeader } from "./components/app-header/app-header";
-import { Hero } from "./components/hero/hero";
-import { Features } from "./components/features/features";
-import { Info } from "./components/info/info";
-import { Sobre } from "./components/sobre/sobre";
-import { Confirm } from "./components/confirm/confirm";
+import { AppHeader } from './components/app-header/app-header';
+import { Hero } from './components/hero/hero';
+import { Features } from './components/features/features';
+import { Info } from './components/info/info';
+import { Sobre } from './components/sobre/sobre';
+import { Confirm } from './components/confirm/confirm';
+import { AREAS, NOME_AREA, classeArea } from '../../core/areas';
+import { Icone } from '../../shared/icone';
 
-// Obs.: o RouterLink saiu dos imports daqui — o home.html não usa routerLink
-// (quem usa são os componentes filhos, e cada um agora importa o seu).
-// Isso também elimina o aviso NG8113 que aparecia no build.
+// Landing em fundo branco (24/09): sem Tailwind no template, sem Lucide por
+// CDN e sem imagens externas. As cores vêm das mesmas variáveis do app.
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, AppHeader, Hero, Features, Info, Sobre, Confirm],
+  imports: [AppHeader, Hero, Features, Info, Sobre, Confirm, Icone],
   templateUrl: './home.html',
   styleUrls: ['./home.css'],
 })
-export class Home {}
+export class Home {
+  readonly areas = AREAS;
+  readonly nomeArea = NOME_AREA;
+  readonly classeArea = classeArea;
+}

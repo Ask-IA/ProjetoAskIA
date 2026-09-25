@@ -1,24 +1,29 @@
 // src/app/pages/cronograma/cronograma.ts
 //
 // Metas semanais + registro de sessões de estudo.
-// Listas em signals (app zoneless): sem isso, o que vem do backend não
-// aparecia até um clique qualquer na tela.
+// Listas e campos em signals (app zoneless): sem isso, o que vem do backend
+// não aparecia até um clique qualquer, e os campos não limpavam depois de salvar.
+//
+// Remover meta tem "Desfazer" por 5 s, como os tópicos em Matérias.
 
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
 import {
   DiaSemana, EstudosService, Materia, Meta, SessaoEstudo,
 } from '../../services/estudos.service';
+import { areaDaMateria, classeArea } from '../../core/areas';
+import { Icone } from '../../shared/icone';
 
 @Component({
   selector: 'app-cronograma',
   standalone: true,
-  imports: [FormsModule, DatePipe],
+  imports: [FormsModule, DatePipe, Icone],
   templateUrl: './cronograma.html',
   styleUrl: './cronograma.css',
+  host: { class: 'pagina' },
 })
-export class Cronograma implements OnInit {
+export class Cronograma implements OnInit, OnDestroy {
   private estudos = inject(EstudosService);
 
   readonly dias: DiaSemana[] = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
@@ -28,16 +33,31 @@ export class Cronograma implements OnInit {
   sessoes = signal<SessaoEstudo[]>([]);
   erro = signal('');
 
-  // formulário de meta (ligados ao ngModel)
-  metaMateriaId: number | null = null;
-  metaDia: DiaSemana = 'Segunda';
-  metaHora = '';
-  metaDescricao = '';
+  // formulário de meta
+  metaMateriaId = signal<number | null>(null);
+  metaDia = signal<DiaSemana>('Segunda');
+  metaHora = signal('');
+  metaDescricao = signal('');
 
   // formulário de sessão
-  sessaoMateriaId: number | null = null;
-  sessaoMinutos = 30;
-  sessaoAnotacoes = '';
+  sessaoMateriaId = signal<number | null>(null);
+  sessaoMinutos = signal(30);
+  sessaoAnotacoes = signal('');
+
+  metaRemovendo = signal<Meta | null>(null);
+  private temporizadorRemocao?: ReturnType<typeof setTimeout>;
+
+  /** Metas de cada dia, já sem a que está esperando o "Desfazer". */
+  readonly metasPorDia = computed(() => {
+    const removendo = this.metaRemovendo()?.id;
+    const porDia = new Map<DiaSemana, Meta[]>();
+    for (const dia of this.dias) {
+      porDia.set(dia, this.metas()
+        .filter(m => m.dia === dia && m.id !== removendo)
+        .sort((a, b) => a.hora.localeCompare(b.hora)));
+    }
+    return porDia;
+  });
 
   ngOnInit(): void {
     this.estudos.listarMaterias().subscribe({
@@ -46,6 +66,10 @@ export class Cronograma implements OnInit {
     });
     this.carregarMetas();
     this.carregarSessoes();
+  }
+
+  ngOnDestroy(): void {
+    this.confirmarRemocao();
   }
 
   private carregarMetas(): void {
@@ -62,54 +86,69 @@ export class Cronograma implements OnInit {
     });
   }
 
-  metasDoDia(dia: DiaSemana): Meta[] {
-    return this.metas()
-      .filter(m => m.dia === dia)
-      .sort((a, b) => a.hora.localeCompare(b.hora));
-  }
-
   nomeMateria(id: number): string {
     return this.materias().find(m => m.id === id)?.nome ?? '—';
   }
 
+  classeDaMateria(id: number): string {
+    return classeArea(areaDaMateria(this.nomeMateria(id)));
+  }
+
   adicionarMeta(): void {
-    if (this.metaMateriaId === null || !this.metaHora) return;
+    const materiaId = this.metaMateriaId();
+    if (materiaId === null || !this.metaHora()) return;
     this.erro.set('');
 
     this.estudos.adicionarMeta({
-      materiaId: Number(this.metaMateriaId),
-      dia: this.metaDia,
-      hora: this.metaHora,
-      descricao: this.metaDescricao.trim() || undefined,
+      materiaId: Number(materiaId),
+      dia: this.metaDia(),
+      hora: this.metaHora(),
+      descricao: this.metaDescricao().trim() || undefined,
     }).subscribe({
       next: () => {
-        this.metaHora = '';
-        this.metaDescricao = '';
+        this.metaHora.set('');
+        this.metaDescricao.set('');
         this.carregarMetas();
       },
       error: err => this.erro.set(err?.error?.message ?? 'Não foi possível criar a meta.'),
     });
   }
 
-  removerMeta(id: number): void {
-    this.estudos.removerMeta(id).subscribe({
+  removerMeta(meta: Meta): void {
+    this.confirmarRemocao();
+    this.metaRemovendo.set(meta);
+    this.temporizadorRemocao = setTimeout(() => this.confirmarRemocao(), 5000);
+  }
+
+  desfazerRemocao(): void {
+    clearTimeout(this.temporizadorRemocao);
+    this.metaRemovendo.set(null);
+  }
+
+  private confirmarRemocao(): void {
+    const meta = this.metaRemovendo();
+    if (!meta) return;
+    clearTimeout(this.temporizadorRemocao);
+    this.metaRemovendo.set(null);
+    this.estudos.removerMeta(meta.id).subscribe({
       next: () => this.carregarMetas(),
       error: () => this.erro.set('Não foi possível remover a meta.'),
     });
   }
 
   registrarSessao(): void {
-    if (this.sessaoMateriaId === null || this.sessaoMinutos <= 0) return;
+    const materiaId = this.sessaoMateriaId();
+    if (materiaId === null || this.sessaoMinutos() <= 0) return;
     this.erro.set('');
 
     this.estudos.registrarSessao({
-      materiaId: Number(this.sessaoMateriaId),
-      minutos: this.sessaoMinutos,
-      anotacoes: this.sessaoAnotacoes.trim() || undefined,
+      materiaId: Number(materiaId),
+      minutos: this.sessaoMinutos(),
+      anotacoes: this.sessaoAnotacoes().trim() || undefined,
     }).subscribe({
       next: () => {
-        this.sessaoAnotacoes = '';
-        this.sessaoMinutos = 30;
+        this.sessaoAnotacoes.set('');
+        this.sessaoMinutos.set(30);
         this.carregarSessoes();
       },
       error: err => this.erro.set(err?.error?.message ?? 'Não foi possível registrar a sessão.'),

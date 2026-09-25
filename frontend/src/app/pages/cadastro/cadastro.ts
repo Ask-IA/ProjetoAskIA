@@ -1,8 +1,8 @@
 import { Component, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
+import { Icone } from '../../shared/icone';
 
 /** Tamanho mínimo da senha. O MESMO valor é validado no backend (UserService). */
 export const TAMANHO_MINIMO_SENHA = 6;
@@ -16,7 +16,7 @@ function passwordsMatchValidator(group: AbstractControl): ValidationErrors | nul
 
 @Component({
   selector: 'app-cadastro',
-  imports: [CommonModule, RouterLink, ReactiveFormsModule],
+  imports: [RouterLink, ReactiveFormsModule, Icone],
   templateUrl: './cadastro.html',
   styleUrl: './cadastro.css',
 })

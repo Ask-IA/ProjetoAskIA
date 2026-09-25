@@ -8,40 +8,48 @@
 }
 
 @if (questoes().length === 0 && !gerando()) {
-  <div class="cartao-app inicio">
+  <section class="cartao-app inicio">
     <div class="campo-app">
       <label for="quiz-materia">Matéria</label>
-      <select id="quiz-materia" name="materia" [(ngModel)]="materiaEscolhida">
-        <option [ngValue]="null" disabled>Selecione uma matéria...</option>
+      <select id="quiz-materia" name="materia" [ngModel]="materiaEscolhida()" (ngModelChange)="materiaEscolhida.set($event)">
+        <option [ngValue]="null" disabled>Selecione uma matéria…</option>
         @for (materia of materias(); track materia) {
           <option [ngValue]="materia">{{ materia }}</option>
         }
       </select>
     </div>
-    <button type="button" class="btn-acento" (click)="gerar()" [disabled]="!materiaEscolhida">
-      Gerar Quiz
+    <button type="button" class="btn-acento" (click)="gerar()" [disabled]="!materiaEscolhida()">
+      Gerar quiz
     </button>
-  </div>
+  </section>
 } @else if (gerando()) {
-  <div class="cartao-app gerando">
-    <p>A IA está montando seu quiz de <strong>{{ materiaEscolhida }}</strong>...</p>
-    <div class="pontos"><span></span><span></span><span></span></div>
-  </div>
+  <section class="cartao-app gerando" role="status">
+    <span class="pontos" aria-hidden="true"><span></span><span></span><span></span></span>
+    <p>A IA está montando seu quiz de <strong>{{ materiaEscolhida() }}</strong>…</p>
+  </section>
 } @else if (terminou()) {
-  <div class="cartao-app final">
+  <section class="cartao-app final">
     <h2>Resultado</h2>
-    <p class="nota">{{ acertos() }} / {{ questoes().length }}</p>
+    <p class="nota">{{ acertos() }} de {{ questoes().length }}</p>
     <p class="comentario">
-      {{ acertos() >= questoes().length * 0.7 ? 'Mandou bem! 🎯' : 'Vale revisar essa matéria nos flashcards. 💪' }}
+      {{ foiBem() ? 'Mandou bem! Continue assim.' : 'Vale revisar essa matéria antes de seguir.' }}
     </p>
-    <button type="button" class="btn-acento" (click)="refazer()">Fazer outro quiz</button>
-  </div>
+    <div class="acoes-final">
+      @if (foiBem()) {
+        <button type="button" class="btn-acento" (click)="refazer()">Fazer outro quiz</button>
+        <a routerLink="/app/flashcards" class="btn-contorno">Revisar nos flashcards</a>
+      } @else {
+        <a routerLink="/app/flashcards" class="btn-acento">Revisar nos flashcards</a>
+        <button type="button" class="btn-contorno" (click)="refazer()">Fazer outro quiz</button>
+      }
+    </div>
+  </section>
 } @else if (atual(); as questao) {
-  <div class="cartao-app questao">
-    <small class="contagem">Questão {{ indice() + 1 }} de {{ questoes().length }} — {{ materiaEscolhida }}</small>
-    <h2>{{ questao.enunciado }}</h2>
+  <section class="cartao-app questao">
+    <p class="contagem">Questão {{ indice() + 1 }} de {{ questoes().length }} · {{ materiaEscolhida() }}</p>
+    <h2 id="enunciado">{{ questao.enunciado }}</h2>
 
-    <div class="alternativas">
+    <div class="alternativas" role="group" aria-labelledby="enunciado">
       @for (alternativa of questao.alternativas; track $index) {
         <button
           type="button"
@@ -49,17 +57,30 @@
           [class.selecionada]="respostaSelecionada() === $index && !respondida()"
           [class.correta]="respondida() && $index === questao.correta"
           [class.errada]="respondida() && respostaSelecionada() === $index && $index !== questao.correta"
+          [attr.aria-pressed]="respostaSelecionada() === $index"
           [disabled]="respondida()"
           (click)="respostaSelecionada.set($index)"
         >
-          {{ alternativa }}
+          <span class="letra" aria-hidden="true">{{ letras[$index] }}</span>
+          <span class="texto">{{ alternativa }}</span>
+          @if (respondida() && $index === questao.correta) {
+            <span class="selo certo"><app-icone nome="check" [tamanho]="16" /> Resposta certa</span>
+          } @else if (respondida() && respostaSelecionada() === $index) {
+            <span class="selo errado"><app-icone nome="x" [tamanho]="16" /> Sua resposta</span>
+          }
         </button>
       }
     </div>
 
+    @if (respondida()) {
+      <div class="explicacao" role="status">
+        <strong>{{ acertouAtual() ? 'Você acertou.' : 'Não foi dessa vez.' }}</strong>
+        @if (questao.explicacao) { Por quê: {{ questao.explicacao }} }
+      </div>
+    }
+
     @if (!respondida()) {
-      <button type="button" class="btn-acento" (click)="confirmar()"
-              [disabled]="respostaSelecionada() === null">
+      <button type="button" class="btn-acento" (click)="confirmar()" [disabled]="respostaSelecionada() === null">
         Confirmar
       </button>
     } @else {
@@ -67,5 +88,5 @@
         {{ indice() + 1 >= questoes().length ? 'Ver resultado' : 'Próxima' }}
       </button>
     }
-  </div>
+  </section>
 }

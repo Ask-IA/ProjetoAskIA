@@ -1,30 +1,84 @@
+/* Recursos: no celular, cartão do Ask IA + carrossel; no computador, grade de 4 colunas */
 
-/* ---- Carrossel de recursos ---- */
+.recursos { background: var(--fundo); }
 
-.carrossel {
+.grade { display: flex; flex-direction: column; gap: 20px; margin-top: 26px; }
+
+.quadro-icone { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 12px; background: var(--fundo); }
+
+/* ---- Cartão escuro do Ask IA ---- */
+.cartao-ask {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 22px;
+  border-radius: 20px;
+  background: linear-gradient(160deg, var(--sidebar-de), var(--sidebar-para));
+  color: var(--texto);
+}
+.cartao-ask .quadro-icone { background: var(--elevado); }
+.ask-texto { display: flex; flex-direction: column; gap: 12px; }
+.ask-texto h3 { margin: 0; font-size: 1.375rem; font-weight: 700; }
+.ask-texto p { margin: 0; color: var(--texto-suave); font-size: .97rem; line-height: 1.55; }
+.ask-texto .link-acao { align-self: flex-start; }
+
+.ask-demo { display: flex; flex-direction: column; gap: 10px; padding: 14px; border: 1px solid var(--linha); border-radius: 14px; background: var(--cartao); }
+.ask-demo .etiqueta-area { align-self: flex-start; padding: 3px 10px; font-size: .75rem; }
+.ask-demo p { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: 9px; margin: 0; font-size: .875rem; line-height: 1.5; }
+.ask-demo .so-computador { display: none; }
+.numero {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--area-forte);
+  color: var(--sobre-forte);
+  font-size: .75rem;
+  font-weight: 700;
+}
+
+/* ---- Seis cartões ---- */
+.trilho {
+  display: flex;
+  gap: 14px;
+  margin-right: -20px;
+  padding-right: 20px;
+  overflow-x: auto;
   scroll-snap-type: x mandatory;
-  scrollbar-width: none;            /* Firefox */
-  -ms-overflow-style: none;         /* Edge antigo */
+  scrollbar-width: none;
 }
-.carrossel::-webkit-scrollbar { display: none; }  /* Chrome/Safari */
+.trilho::-webkit-scrollbar { display: none; }
 
-.carrossel .cartao {
+.cartao-recurso {
+  display: flex;
+  flex: 0 0 272px;
+  flex-direction: column;
+  gap: 10px;
+  padding: 22px;
+  border: 1px solid var(--linha);
+  border-radius: 20px;
+  background: var(--cartao);
   scroll-snap-align: start;
-  width: 88%;
 }
-@media (min-width: 768px)  { .carrossel .cartao { width: calc((100% - 1.25rem) / 2); } }
-@media (min-width: 1024px) { .carrossel .cartao { width: calc((100% - 2.5rem) / 3); } }
+.cartao-recurso h3 { margin: 0; font-size: 1.25rem; font-weight: 700; }
+.cartao-recurso p { margin: 0; color: var(--texto-suave); font-size: .9375rem; line-height: 1.55; }
+.exemplo { align-self: flex-start; margin-top: auto; padding: 7px 11px; border-radius: 10px; background: var(--fundo); font-size: .84rem; }
 
-.seta:disabled { opacity: .35; cursor: not-allowed; }
+.navegacao-celular { display: flex; align-items: center; gap: 12px; color: var(--texto-suave); font-size: .875rem; }
+.bolinhas { display: flex; }
+/* o alvo de toque é 24 px, mesmo com a bolinha desenhada pequena */
+.bolinha { display: grid; place-items: center; width: 24px; height: 24px; }
+.bolinha span { width: 8px; height: 8px; border-radius: 4px; background: var(--borda-campo); transition: width .2s ease; }
+.bolinha.ativa span { width: 20px; background: var(--texto); }
 
-.bolinha {
-  width: 8px;
-  background: rgba(186, 230, 253, .28);
-  border: none;
-  cursor: pointer;
-  padding: 0;
-}
-.bolinha.ativa {
-  width: 26px;
-  background: rgb(125, 211, 252);
+@media (min-width: 1024px) {
+  .grade { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; margin-top: 48px; }
+  .cartao-ask { display: grid; grid-column: span 2; grid-template-columns: minmax(0, 1fr) 250px; gap: 24px; min-height: 236px; padding: 26px 28px; }
+  .ask-texto .link-acao { margin-top: auto; }
+  .ask-demo { align-self: center; }
+  .ask-demo .so-computador { display: grid; }
+  .trilho { display: contents; }
+  .cartao-recurso { min-height: 236px; padding: 24px; }
+  .navegacao-celular { display: none; }
 }

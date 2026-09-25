@@ -1,89 +1,137 @@
 <!-- src/app/pages/painel/painel.html -->
 
-<div class="topo">
-  <div>
-    <h1 class="pagina-titulo">Olá, {{ nome() }}!</h1>
-    <p class="pagina-sub">Veja seu progresso diário.</p>
+<header class="topo">
+  <div class="saudacao">
+    <h1 class="pagina-titulo">Olá, {{ nome() }}</h1>
+    <p class="pagina-sub">{{ hoje }}</p>
   </div>
-  <a routerLink="/app/ask" class="btn-acento atalho-ask">Pergunte ao Ask IA</a>
-</div>
+
+  <!-- Celular: a conta (modo escuro e sair) fica aqui, já que a barra de baixo só tem os 5 destinos -->
+  <app-conta-acoes class="conta-celular" modo="compacto" />
+
+  <!-- Um único botão principal -->
+  <div class="continuar">
+    @if (ultimaConversa(); as conversa) {
+      <a class="btn-acento" routerLink="/app/ask" [queryParams]="{ conversa: conversa.id }">
+        <span class="continuar-texto">Continuar: {{ conversa.titulo }}</span>
+        <app-icone nome="seta-direita" [tamanho]="18" />
+      </a>
+      <span class="continuar-detalhe">Sua última conversa no Ask IA · {{ conversa.quando }}</span>
+    } @else {
+      <a class="btn-acento" routerLink="/app/ask">
+        Perguntar ao Ask IA
+        <app-icone nome="seta-direita" [tamanho]="18" />
+      </a>
+    }
+  </div>
+</header>
 
 @if (erro()) {
   <p class="msg-erro-app">
     {{ erro() }}
-    <button type="button" class="btn-claro" (click)="carregar()">Tentar de novo</button>
+    <button type="button" class="btn-contorno" (click)="carregar()">Tentar de novo</button>
   </p>
-} @else if (resumo(); as r) {
+} @else if (carregando()) {
+  <p class="aviso">Carregando seu painel…</p>
+} @else {
 
   <div class="cartoes">
-    <div class="cartao-app metrica">
-      <span class="metrica-rotulo">Tempo Total</span>
-      <strong>{{ r.minutosTotais }}min</strong>
-      <small>acumulado</small>
-    </div>
-    <div class="cartao-app metrica">
-      <span class="metrica-rotulo">Semana</span>
-      <strong>{{ r.minutosSemana }}min</strong>
-      <small>últimos 7 dias</small>
-    </div>
-    <div class="cartao-app metrica">
-      <span class="metrica-rotulo">Tópicos Concluídos</span>
-      <strong>{{ r.topicosConcluidos }}</strong>
-      <small>{{ r.topicosConcluidos }} tópicos</small>
-    </div>
-    <div class="cartao-app metrica">
-      <span class="metrica-rotulo">Matérias</span>
-      <strong>{{ r.totalMaterias }}</strong>
-      <small>{{ r.totalMaterias }} matérias</small>
-    </div>
+    <section class="cartao-app resumo">
+      <h2 class="rotulo-secao"><app-icone nome="fogo" [tamanho]="18" /> Ofensiva</h2>
+      <p class="numero-grande">
+        @if (ofensiva() !== null) {
+          {{ ofensiva() }} {{ ofensiva() === 1 ? 'dia seguido' : 'dias seguidos' }}
+        } @else { — }
+      </p>
+      <ol class="dias" aria-label="Estudo nos últimos 7 dias">
+        @for (dia of semana(); track $index) {
+          <li [class.estudou]="dia.estudou" [class.hoje]="dia.hoje">
+            <span class="bolinha" aria-hidden="true"></span>
+            <span aria-hidden="true">{{ dia.letra }}</span>
+            <span class="so-leitor">{{ dia.descricao }}</span>
+          </li>
+        }
+      </ol>
+    </section>
+
+    <section class="cartao-app resumo">
+      <h2 class="rotulo-secao"><app-icone nome="flashcards" [tamanho]="18" /> Revisar hoje</h2>
+      <p class="numero-grande">{{ cartoes().length }} {{ cartoes().length === 1 ? 'cartão' : 'cartões' }}</p>
+      @if (cartoesPorArea()) {
+        <p class="detalhe">{{ cartoesPorArea() }}</p>
+      }
+      <a routerLink="/app/flashcards" class="link-acao embaixo">Revisar agora</a>
+    </section>
+
+    <section class="cartao-app resumo">
+      <h2 class="rotulo-secao"><app-icone nome="relogio" [tamanho]="18" /> Esta semana</h2>
+      <p class="numero-grande">{{ tempoSemana() }}</p>
+      <div class="barrinhas" aria-hidden="true">
+        @for (dia of semana(); track $index) {
+          <span [class.vazia]="!dia.estudou" [style.height.%]="dia.estudou ? (dia.minutos / maiorDiaDaSemana()) * 100 : 8"></span>
+        }
+      </div>
+      <p class="detalhe">de estudo registrado nos últimos 7 dias</p>
+    </section>
   </div>
 
   <div class="linha-meio">
-    <div class="cartao-app grafico">
-      <span class="grafico-titulo">Últimos 7 dias — minutos estudados por dia</span>
-      <div class="barras">
-        @for (dia of r.minutosPorDia; track dia.rotulo) {
-          <div class="coluna">
-            <span class="valor">{{ dia.minutos > 0 ? dia.minutos : '' }}</span>
-            <div class="barra" [style.height.%]="alturaBarra(dia.minutos)"></div>
-            <span class="dia">{{ dia.rotulo }}</span>
-          </div>
+    <section class="cartao-app">
+      <div class="cabecalho-secao">
+        <h2 class="titulo-secao">Tópicos concluídos por área</h2>
+        <span class="detalhe">o que você marcou em Matérias</span>
+      </div>
+      @for (item of porArea(); track item.area) {
+        <div class="linha-area" [class]="classeArea(item.area)">
+          <span class="nome-area"><span class="ponto-area"></span>{{ item.nome }}</span>
+          <span class="trilha"><span class="preenchido" [style.width.%]="item.percentual"></span></span>
+          <span class="valor">
+            @if (item.total > 0) {
+              <b>{{ item.percentual }}%</b> <small>{{ item.feitos }} de {{ item.total }}</small>
+            } @else {
+              <small>sem tópicos</small>
+            }
+          </span>
+        </div>
+      }
+    </section>
+
+    <section class="cartao-app foco">
+      <h2 class="titulo-secao">Onde focar agora</h2>
+      @if (ondeFocar(); as foco) {
+        @if (foco.area) {
+          <span class="etiqueta-area" [class]="classeArea(foco.area)"><span class="ponto-area"></span>{{ nomeArea[foco.area] }}</span>
         }
-      </div>
-    </div>
-
-    <div class="destaques">
-      <div class="cartao-app destaque">
-        <span>Matéria com maior desempenho</span>
-        @if (r.maiorDesempenho) {
-          <strong class="positivo">{{ r.maiorDesempenho.materia }}</strong>
-          <em class="positivo">{{ r.maiorDesempenho.percentual }}%</em>
-        } @else { <strong>—</strong> }
-      </div>
-      <div class="cartao-app destaque">
-        <span>Matéria com menor desempenho</span>
-        @if (r.menorDesempenho) {
-          <strong class="negativo">{{ r.menorDesempenho.materia }}</strong>
-          <em class="negativo">{{ r.menorDesempenho.percentual }}%</em>
-        } @else { <strong>—</strong> }
-      </div>
-    </div>
+        <p>
+          <b>{{ foco.nome }}: {{ foco.topico }}.</b>
+          {{ foco.feitos }} de {{ foco.total }} tópicos concluídos, a menor parte entre as suas matérias.
+        </p>
+        <a class="btn-contorno" routerLink="/app/ask" [queryParams]="{ pergunta: perguntaSobre(foco) }">
+          Perguntar ao Ask IA
+        </a>
+      } @else {
+        <p class="detalhe">Cadastre matérias e tópicos para ver aqui onde vale investir a próxima hora.</p>
+        <a class="btn-contorno" routerLink="/app/materias">Ir para Matérias</a>
+      }
+    </section>
   </div>
 
-  <div class="atalhos">
-    <div class="cartao-app atalho">
-      <span>Verifique as suas matérias</span>
-      <a routerLink="/app/materias" class="btn-acento">Matérias</a>
+  <section class="cartao-app">
+    <div class="cabecalho-secao">
+      <h2 class="titulo-secao">Suas matérias</h2>
+      <a routerLink="/app/materias" class="link-acao">Ver todas</a>
     </div>
-    <div class="cartao-app atalho">
-      <span>Verifique o seu progresso</span>
-      <a routerLink="/app/progresso" class="btn-acento">Progresso</a>
-    </div>
-    <div class="cartao-app atalho">
-      <span>Monte seu Quiz</span>
-      <a routerLink="/app/quiz" class="btn-acento">Quiz IA</a>
-    </div>
-  </div>
-} @else {
-  <p class="carregando">Carregando seu painel...</p>
+    @if (suasMaterias().length > 0) {
+      <ul class="grade-materias">
+        @for (materia of suasMaterias(); track materia.id) {
+          <li [class]="classeArea(materia.area)">
+            <span class="nome-materia"><span class="ponto-area"></span>{{ materia.nome }}</span>
+            <small>{{ materia.feitos }} de {{ materia.total }} tópicos</small>
+          </li>
+        }
+      </ul>
+    } @else {
+      <p class="detalhe">Nenhuma matéria cadastrada ainda.</p>
+    }
+  </section>
 }

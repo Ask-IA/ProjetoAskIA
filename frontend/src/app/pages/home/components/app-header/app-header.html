@@ -1,30 +1,38 @@
-<header class="relative z-20 w-full px-5 pt-5 md:px-10">
-    <nav class="glass mx-auto flex max-w-7xl items-center justify-between rounded-2xl px-5 py-3.5" aria-label="Navegação principal">
-      <a href="#inicio" class="flex items-center gap-3 rounded-lg">
-        <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-sky-300 text-slate-950">
-          <i data-lucide="sparkles" width="19" height="19"></i>
-        </span>
-        <span class="font-bold tracking-tight">Ask IA</span>
-      </a>
+<header class="cabecalho">
+  <nav class="barra" aria-label="Navegação principal">
+    <a href="#inicio" class="marca">
+      <span class="logo-quadro"><app-icone nome="logo" [tamanho]="20" /></span>
+      Ask.IA
+    </a>
 
-      <div class="desktop-nav flex items-center gap-7">
-        <a class="text-sm font-medium transition hover:text-sky-200" href="#recursos">Recursos</a>
-        <a class="text-sm font-medium transition hover:text-sky-200" href="#como-funciona">Como Funciona</a>
-        <a class="text-sm font-medium transition hover:text-sky-200" href="#sobre">Sobre</a>
-        <a routerLink="/login" class="rounded-xl bg-sky-300 px-4 py-2.5 text-sm font-bold text-slate-950 transition hover:brightness-110">
-          Entrar  
-        </a>
-      </div>
-
-      <button (click)="toggleMobileMenu()" class="mobile-toggle items-center justify-center rounded-xl border border-sky-200/20 p-2 text-sky-100" type="button" aria-label="Abrir menu">
-        <i data-lucide="menu" width="21" height="21"></i>
-      </button>
-    </nav>
-
-    <div [class.is-open]="isMobileMenuOpen" class="mobile-nav glass mx-auto mt-2 max-w-7xl flex-col gap-1 rounded-2xl p-4 md:hidden">
-      <a (click)="closeMobileMenu()" class="rounded-lg px-3 py-2.5 font-medium hover:bg-sky-200/10" href="#recursos">Recursos</a>
-      <a (click)="closeMobileMenu()" class="rounded-lg px-3 py-2.5 font-medium hover:bg-sky-200/10" href="#como-funciona">Como Funciona</a>
-      <a (click)="closeMobileMenu()" class="rounded-lg px-3 py-2.5 font-medium hover:bg-sky-200/10" href="#sobre">Sobre</a>
-      <a routerLink="/login" (click)="closeMobileMenu()" class="mt-2 text-center rounded-xl bg-sky-300 px-4 py-2.5 font-bold text-slate-950">Entrar</a>
+    <!-- Computador -->
+    <div class="links">
+      <a href="#recursos">Recursos</a>
+      <a href="#como-funciona">Como funciona</a>
+      <a href="#sobre">Sobre</a>
+      <span class="acoes">
+        <a routerLink="/login" class="btn-tinta">Entrar</a>
+        <a routerLink="/cadastro" class="btn-acento">Criar conta grátis</a>
+      </span>
     </div>
-  </header>
+
+    <!-- Celular -->
+    <div class="acoes-celular">
+      <a routerLink="/login" class="btn-tinta">Entrar</a>
+      <button type="button" class="btn-icone botao-menu" (click)="alternarMenu()"
+              [attr.aria-expanded]="menuAberto()" aria-controls="menu-landing"
+              [attr.aria-label]="menuAberto() ? 'Fechar menu' : 'Abrir menu'">
+        <app-icone [nome]="menuAberto() ? 'x' : 'menu'" [tamanho]="22" />
+      </button>
+    </div>
+  </nav>
+
+  @if (menuAberto()) {
+    <div class="menu-celular" id="menu-landing">
+      <a href="#recursos" (click)="fecharMenu()">Recursos</a>
+      <a href="#como-funciona" (click)="fecharMenu()">Como funciona</a>
+      <a href="#sobre" (click)="fecharMenu()">Sobre</a>
+      <a routerLink="/cadastro" class="btn-acento" (click)="fecharMenu()">Criar conta grátis</a>
+    </div>
+  }
+</header>

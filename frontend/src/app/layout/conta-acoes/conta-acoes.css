@@ -1,0 +1,157 @@
+/* src/app/layout/conta-acoes/conta-acoes.css */
+
+:host {
+  display: block;
+}
+
+.conta {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ---- Interruptor do modo escuro ---- */
+
+.linha-tema {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 12px;
+  border-radius: var(--raio-pequeno);
+  color: var(--texto-menu);
+  font-size: .875rem;
+  text-align: left;
+}
+.linha-tema:hover {
+  background: color-mix(in srgb, var(--texto) 6%, transparent);
+}
+
+.rotulo-tema {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.interruptor {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 40px;
+  height: 24px;
+  padding: 2px;
+  border: 1.5px solid var(--borda-campo);
+  border-radius: 999px;
+  background: var(--cartao);
+  flex-shrink: 0;
+}
+.bolinha {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--borda-campo);
+}
+/* Ligado: o estado aparece pela posição da bolinha, não só pela cor */
+[aria-checked="true"] .interruptor {
+  justify-content: flex-end;
+  border-color: var(--acento);
+  background: var(--acento);
+}
+[aria-checked="true"] .bolinha {
+  background: var(--acento-texto);
+}
+
+/* ---- Usuário ---- */
+
+.usuario {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0 0 12px;
+  border-top: 1px solid var(--linha);
+}
+
+.avatar {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--acento-suave);
+  color: var(--menu-ativo-texto);
+  font-size: .8125rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.identificacao {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  line-height: 1.3;
+  color: var(--texto);
+}
+.identificacao b,
+.identificacao small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.identificacao b { font-size: .875rem; }
+.identificacao small { color: var(--texto-suave); font-size: .75rem; }
+
+/* ---- Versão compacta (topo do Painel, no celular) ---- */
+
+.compacto {
+  position: relative;
+}
+
+.avatar-botao {
+  width: 44px;
+  height: 44px;
+  font-size: .875rem;
+}
+
+.menu-flutuante {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 8px);
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: min(280px, calc(100vw - 32px));
+  padding: 8px;
+  border: 1px solid var(--linha);
+  border-radius: 14px;
+  background: var(--elevado);
+  box-shadow: var(--sombra-flutuante);
+}
+
+.menu-flutuante .identificacao {
+  margin: 0 0 4px;
+  padding: 8px 12px 10px;
+  border-bottom: 1px solid var(--linha);
+}
+
+.menu-flutuante .linha-tema {
+  color: var(--texto);
+}
+
+.botao-sair {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 8px 12px;
+  border-radius: var(--raio-pequeno);
+  color: var(--texto);
+  font-size: .875rem;
+  font-weight: 600;
+}
+.botao-sair:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--texto) 6%, transparent);
+}

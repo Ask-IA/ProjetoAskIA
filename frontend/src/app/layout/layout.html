@@ -2,39 +2,63 @@
 
 <div class="casca">
 
-  <!-- Menu: barra lateral no desktop, barra inferior no celular -->
-  <nav class="menu" aria-label="Navegação principal">
+  <!-- Computador: menu lateral com as 7 seções -->
+  <nav class="menu-lateral" aria-label="Navegação principal">
+    <a routerLink="/app/ask" class="marca">
+      <span class="logo-quadro"><app-icone nome="logo" [tamanho]="19" /></span>
+      Ask.IA
+    </a>
 
-    <div class="marca">
-      <span class="marca-icone" aria-hidden="true">◉</span>
-      <span class="marca-nome">Ask.IA</span>
-    </div>
+    @for (grupo of gruposComputador; track $index) {
+      @if (grupo.rotulo) {
+        <p class="grupo-rotulo" [id]="'grupo-menu-' + $index">{{ grupo.rotulo }}</p>
+      }
+      <ul class="lista" [attr.aria-labelledby]="grupo.rotulo ? 'grupo-menu-' + $index : null">
+        @for (item of grupo.itens; track item.rota) {
+          <li>
+            <a [routerLink]="item.rota" routerLinkActive="ativo" #rla="routerLinkActive"
+               [attr.aria-current]="rla.isActive ? 'page' : null">
+              <app-icone [nome]="item.icone" />
+              {{ item.rotulo }}
+            </a>
+          </li>
+        }
+      </ul>
+    }
 
-    <ul class="lista">
-      @for (item of itens; track item.rota) {
+    <app-conta-acoes class="rodape-menu" modo="menu" />
+  </nav>
+
+  <!-- Celular: barra de baixo com 5 destinos -->
+  <nav class="barra-celular" aria-label="Navegação principal">
+    <ul>
+      @for (destino of destinosCelular(); track destino.rotulo) {
         <li>
-          <a
-            [routerLink]="item.rota"
-            routerLinkActive="ativo"
-            #rla="routerLinkActive"
-            [attr.aria-current]="rla.isActive ? 'page' : null"
-          >
-            <span class="icone" aria-hidden="true">{{ item.icone }}</span>
-            <span class="rotulo">{{ item.rotulo }}</span>
+          <a [routerLink]="destino.rota" [class.ativo]="destino.ativo"
+             [attr.aria-current]="destino.ativo ? 'page' : null">
+            <span class="pilula-icone"><app-icone [nome]="destino.icone" [tamanho]="22" /></span>
+            {{ destino.rotulo }}
           </a>
         </li>
       }
     </ul>
-
-    <button type="button" class="sair" (click)="sair()" [disabled]="saindo()">
-      <span class="icone" aria-hidden="true">⎋</span>
-      <span class="rotulo">{{ saindo() ? 'Saindo...' : 'Sair' }}</span>
-    </button>
-
   </nav>
 
-  <!-- Cada seção é renderizada aqui -->
   <main class="conteudo">
+    <!-- Celular: abas para trocar entre as duas seções de Praticar ou de Plano -->
+    @if (grupoAtual(); as grupo) {
+      <nav class="abas-grupo" [attr.aria-label]="grupo.rotulo">
+        @for (aba of grupo.abas; track aba.rota) {
+          <a [routerLink]="aba.rota" routerLinkActive="ativa" #rlaAba="routerLinkActive"
+             [attr.aria-current]="rlaAba.isActive ? 'page' : null">
+            <app-icone [nome]="aba.icone" [tamanho]="18" />
+            {{ aba.rotulo }}
+          </a>
+        }
+      </nav>
+    }
+
+    <!-- Cada seção é renderizada aqui -->
     <router-outlet />
   </main>
 

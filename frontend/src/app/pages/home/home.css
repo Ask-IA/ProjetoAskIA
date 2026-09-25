@@ -1,7 +1,74 @@
-/* home.css e login.css (tema escuro) */
+/* src/app/pages/home/home.css */
+
 :host {
   display: block;
-  min-height: 100vh;
-  background-color: var(--deep);
-  color: var(--ink);
+}
+
+.quadriculado {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 1000px;
+  pointer-events: none;
+  background-image:
+    linear-gradient(color-mix(in srgb, var(--acento) 10%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--acento) 10%, transparent) 1px, transparent 1px);
+  background-size: 24px 24px;
+  -webkit-mask-image: linear-gradient(to bottom, black 35%, transparent 90%);
+  mask-image: linear-gradient(to bottom, black 35%, transparent 90%);
+}
+
+main {
+  position: relative;
+}
+
+/* ---- Faixa das áreas ---- */
+
+.faixa-areas {
+  padding: 32px 20px;
+  border-block: 1px solid var(--linha);
+  background: var(--cartao);
+}
+
+.faixa-conteudo {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.faixa-texto { display: flex; flex-direction: column; gap: 6px; }
+.faixa-texto h2 { margin: 0; font-family: "Fraunces", Georgia, serif; font-size: 1.5rem; font-weight: 700; line-height: 1.2; }
+.faixa-texto p { margin: 0; color: var(--texto-suave); font-size: .9375rem; line-height: 1.5; }
+
+.lista-areas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.lista-areas .etiqueta-area { gap: 8px; padding: 10px 12px; border-radius: 12px; font-size: .875rem; white-space: normal; }
+
+/* ---- Rodapé ---- */
+
+.rodape {
+  display: flex;
+  max-width: 1280px;
+  margin: 0 auto;
+  flex-direction: column;
+  gap: 10px;
+  padding: 32px 20px;
+  color: var(--texto-suave);
+  font-size: .875rem;
+}
+
+.rodape-marca { display: flex; align-items: center; gap: 9px; color: var(--texto); font-size: 1rem; font-weight: 700; }
+.logo-quadro.pequeno { width: 28px; height: 28px; border-radius: 8px; }
+
+@media (min-width: 900px) {
+  .quadriculado { height: 900px; background-size: 28px 28px; -webkit-mask-image: linear-gradient(to bottom, black 45%, transparent 96%); mask-image: linear-gradient(to bottom, black 45%, transparent 96%); }
+  .faixa-areas { padding: 34px 40px; }
+  .faixa-conteudo { flex-direction: row; align-items: center; justify-content: space-between; gap: 40px; }
+  .faixa-texto h2 { font-size: 1.6875rem; }
+  .faixa-texto p { font-size: 1rem; }
+  /* o texto cede espaço primeiro; as etiquetas só quebram linha em telas médias */
+  .faixa-texto { flex: 1 1 280px; }
+  .lista-areas { display: flex; flex: 0 1 auto; flex-wrap: wrap; justify-content: flex-end; gap: 12px; }
+  .lista-areas .etiqueta-area { padding: 10px 16px; border-radius: 999px; font-size: .9375rem; white-space: nowrap; }
+  .rodape { flex-direction: row; align-items: center; justify-content: space-between; padding: 40px; }
 }

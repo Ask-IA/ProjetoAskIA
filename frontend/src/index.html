@@ -5,11 +5,23 @@
   <title>Ask.IA</title>
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
+
+  <!-- Escolhe o modo (claro/escuro) ANTES de o Angular carregar, para a tela
+       não piscar branca em quem usa o modo escuro. Sem escolha salva, segue o
+       aparelho. O botão "Modo escuro" do menu grava a escolha em "askia-tema". -->
+  <script>
+    (function () {
+      try {
+        var salvo = localStorage.getItem('askia-tema');
+        var escuro = salvo ? salvo === 'escuro' : matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.dataset.tema = escuro ? 'escuro' : 'claro';
+      } catch (e) {}
+    })();
+  </script>
 </head>
 <body>
   <app-root></app-root>
-  <script src="https://cdn.tailwindcss.com"></script>
-<script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
 </body>
 </html>

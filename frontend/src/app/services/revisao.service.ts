@@ -21,6 +21,12 @@ export interface QuestaoQuiz {
   enunciado: string;
   alternativas: string[];
   correta: number; // índice da alternativa correta
+  /**
+   * Uma linha dizendo POR QUE a certa é a certa. Feedback que só diz
+   * "certo/errado" é o tipo mais pobre de feedback (Shute, 2008).
+   * TODO (integração): pedir este campo no prompt do quiz (João).
+   */
+  explicacao?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -36,18 +42,18 @@ export class RevisaoService {
 
   private questoesPorMateria: Record<string, QuestaoQuiz[]> = {
     'Matemática': [
-      { enunciado: 'Qual é o valor de f(2) para f(x) = 3x + 1?', alternativas: ['5', '6', '7', '8'], correta: 2 },
-      { enunciado: 'O gráfico de uma função afim é sempre:', alternativas: ['Uma parábola', 'Uma reta', 'Uma curva', 'Um círculo'], correta: 1 },
-      { enunciado: '25% de 200 é:', alternativas: ['25', '50', '75', '100'], correta: 1 },
-      { enunciado: 'Se a < 0 em f(x) = ax + b, a função é:', alternativas: ['Crescente', 'Constante', 'Decrescente', 'Nula'], correta: 2 },
-      { enunciado: 'A raiz de f(x) = 2x - 8 é:', alternativas: ['2', '4', '6', '8'], correta: 1 },
+      { enunciado: 'Qual é o valor de f(2) para f(x) = 3x + 1?', alternativas: ['5', '6', '7', '8'], correta: 2, explicacao: 'Troque x por 2: f(2) = 3·2 + 1 = 7.' },
+      { enunciado: 'O gráfico de uma função afim é sempre:', alternativas: ['Uma parábola', 'Uma reta', 'Uma curva', 'Um círculo'], correta: 1, explicacao: 'f(x) = ax + b cresce sempre no mesmo ritmo (a), por isso o gráfico é uma reta. Parábola é da função quadrática.' },
+      { enunciado: '25% de 200 é:', alternativas: ['25', '50', '75', '100'], correta: 1, explicacao: '25% é um quarto: 200 ÷ 4 = 50.' },
+      { enunciado: 'Se a < 0 em f(x) = ax + b, a função é:', alternativas: ['Crescente', 'Constante', 'Decrescente', 'Nula'], correta: 2, explicacao: 'Com a negativo, cada vez que x aumenta 1, f(x) diminui: a reta desce.' },
+      { enunciado: 'A raiz de f(x) = 2x - 8 é:', alternativas: ['2', '4', '6', '8'], correta: 1, explicacao: 'Raiz é onde f(x) = 0: 2x - 8 = 0, então x = 4.' },
     ],
     'Português': [
-      { enunciado: 'Em qual frase a crase está correta?', alternativas: ['Vou à escola.', 'Vou à passear.', 'Refiro-me à ele.', 'Cheguei à casa cedo (minha casa).'], correta: 0 },
-      { enunciado: '"Interpretação de texto" avalia principalmente:', alternativas: ['Memorização', 'Compreensão', 'Caligrafia', 'Velocidade'], correta: 1 },
-      { enunciado: 'Sinônimo de "conciso":', alternativas: ['Longo', 'Confuso', 'Breve', 'Repetitivo'], correta: 2 },
-      { enunciado: 'A norma culta exige concordância entre:', alternativas: ['Sujeito e verbo', 'Verbo e vírgula', 'Artigo e ponto', 'Sujeito e parágrafo'], correta: 0 },
-      { enunciado: 'Qual é figura de linguagem em "chorou rios de lágrimas"?', alternativas: ['Metonímia', 'Hipérbole', 'Eufemismo', 'Ironia'], correta: 1 },
+      { enunciado: 'Em qual frase a crase está correta?', alternativas: ['Vou à escola.', 'Vou à passear.', 'Refiro-me à ele.', 'Cheguei à casa cedo (minha casa).'], correta: 0, explicacao: 'No masculino fica "vou ao colégio": apareceu "ao", então no feminino é "à". Não há crase antes de verbo, de pronome como "ele" nem de "casa" no sentido de lar.' },
+      { enunciado: '"Interpretação de texto" avalia principalmente:', alternativas: ['Memorização', 'Compreensão', 'Caligrafia', 'Velocidade'], correta: 1, explicacao: 'Interpretar é entender o que o texto diz e o que ele sugere, não decorar.' },
+      { enunciado: 'Sinônimo de "conciso":', alternativas: ['Longo', 'Confuso', 'Breve', 'Repetitivo'], correta: 2, explicacao: 'Conciso é o que diz muito em poucas palavras, ou seja, breve.' },
+      { enunciado: 'A norma culta exige concordância entre:', alternativas: ['Sujeito e verbo', 'Verbo e vírgula', 'Artigo e ponto', 'Sujeito e parágrafo'], correta: 0, explicacao: 'Concordância verbal: o verbo acompanha o número e a pessoa do sujeito ("Os alunos estudam").' },
+      { enunciado: 'Qual é figura de linguagem em "chorou rios de lágrimas"?', alternativas: ['Metonímia', 'Hipérbole', 'Eufemismo', 'Ironia'], correta: 1, explicacao: 'Hipérbole é o exagero proposital para dar ênfase: ninguém chora rios de verdade.' },
     ],
   };
 

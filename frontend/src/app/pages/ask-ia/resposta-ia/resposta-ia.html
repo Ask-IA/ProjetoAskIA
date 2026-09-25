@@ -1,0 +1,55 @@
+<!-- src/app/pages/ask-ia/resposta-ia/resposta-ia.html -->
+
+<article class="resposta" [class]="classe()">
+  <div class="resposta-topo">
+    @if (resposta().area; as area) {
+      <!-- a área sempre com o nome escrito: a cor sozinha não informa nada -->
+      <span class="etiqueta-area"><span class="ponto-area"></span>{{ nomeArea[area] }}</span>
+    }
+    @if (resposta().topico) {
+      <span class="topico">{{ resposta().topico }}</span>
+    }
+    <span class="modo-usado">Modo {{ nomeModo[resposta().modo] }}</span>
+  </div>
+
+  <ol class="passos">
+    @for (passo of resposta().passos; track $index; let j = $index) {
+      @if (j < mensagem().passosVisiveis) {
+        <li class="passo" [id]="idDoPasso(j)" tabindex="-1">
+          <span class="numero" aria-hidden="true">{{ j + 1 }}</span>
+          <div>
+            <h3>{{ passo.titulo }}</h3>
+            <p>@for (trecho of passo.conteudo | trechos; track $index) {@if (trecho.destaque) {<mark class="marca-texto">{{ trecho.texto }}</mark>} @else {<ng-container>{{ trecho.texto }}</ng-container>}}</p>
+            @if (passo.formula) {
+              <div class="formula">{{ passo.formula }}</div>
+            }
+          </div>
+        </li>
+      }
+    }
+  </ol>
+
+  @if (faltamPassos()) {
+    <div class="revelar">
+      <p>Tente fazer o passo {{ mensagem().passosVisiveis + 1 }} sozinho antes de ver.</p>
+      <button type="button" class="btn-contorno" (click)="revelar()">
+        Tentei, mostrar o passo {{ mensagem().passosVisiveis + 1 }}
+      </button>
+    </div>
+  }
+</article>
+
+@if (resposta().tenteVoce && !faltamPassos()) {
+  <div class="tente-voce">
+    <div class="tente-texto">
+      <span class="rotulo-secao">Tente você</span>
+      <p>{{ resposta().tenteVoce?.pergunta }}</p>
+      @if (mensagem().tenteVoceAberto) {
+        <p class="tente-resposta">{{ resposta().tenteVoce?.resposta }}</p>
+      }
+    </div>
+    @if (!mensagem().tenteVoceAberto) {
+      <button type="button" class="link-acao" (click)="verResposta()">Ver resposta</button>
+    }
+  </div>
+}

@@ -1,29 +1,23 @@
-import { CommonModule } from '@angular/common';
-import { AfterViewInit, Component} from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-
-declare const lucide:any;
+import { Icone } from '../../../../shared/icone';
 
 @Component({
   selector: 'app-header',
-  imports: [CommonModule, RouterLink],
+  imports: [RouterLink, Icone],
   templateUrl: './app-header.html',
   styleUrl: './app-header.css',
+  host: { '(keydown.escape)': 'fecharMenu()' },
 })
-export class AppHeader implements AfterViewInit {
-  isMobileMenuOpen = false;
+export class AppHeader {
+  // signal: o app é zoneless
+  readonly menuAberto = signal(false);
 
-  ngAfterViewInit(): void {
-    if (typeof lucide !== 'undefined') {
-      lucide.createIcons();
-    }
+  alternarMenu(): void {
+    this.menuAberto.update(aberto => !aberto);
   }
 
-  toggleMobileMenu(): void {
-    this.isMobileMenuOpen = !this.isMobileMenuOpen;
-  }
-
-  closeMobileMenu(): void {
-    this.isMobileMenuOpen = false;
+  fecharMenu(): void {
+    this.menuAberto.set(false);
   }
 }

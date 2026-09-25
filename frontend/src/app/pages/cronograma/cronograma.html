@@ -12,13 +12,13 @@
   <div class="coluna-formularios">
 
     <!-- Adicionar meta -->
-    <div class="cartao-app">
-      <h2 class="secao-titulo">Adicione uma meta</h2>
+    <section class="cartao-app">
+      <h2 class="titulo-secao">Adicione uma meta</h2>
 
       <div class="campo-app">
         <label for="meta-materia">Matéria</label>
-        <select id="meta-materia" name="metaMateria" [(ngModel)]="metaMateriaId">
-          <option [ngValue]="null" disabled>Selecione uma matéria...</option>
+        <select id="meta-materia" name="metaMateria" [ngModel]="metaMateriaId()" (ngModelChange)="metaMateriaId.set($event)">
+          <option [ngValue]="null" disabled>Selecione uma matéria…</option>
           @for (materia of materias(); track materia.id) {
             <option [ngValue]="materia.id">{{ materia.nome }}</option>
           }
@@ -28,7 +28,7 @@
       <div class="linha-dupla">
         <div class="campo-app">
           <label for="meta-dia">Dia</label>
-          <select id="meta-dia" name="metaDia" [(ngModel)]="metaDia">
+          <select id="meta-dia" name="metaDia" [ngModel]="metaDia()" (ngModelChange)="metaDia.set($event)">
             @for (dia of dias; track dia) {
               <option [ngValue]="dia">{{ dia }}</option>
             }
@@ -36,29 +36,31 @@
         </div>
         <div class="campo-app">
           <label for="meta-hora">Hora</label>
-          <input id="meta-hora" name="metaHora" type="time" [(ngModel)]="metaHora" />
+          <input id="meta-hora" name="metaHora" type="time" [ngModel]="metaHora()" (ngModelChange)="metaHora.set($event)" />
         </div>
       </div>
 
       <div class="campo-app">
         <label for="meta-desc">Descrição (opcional)</label>
-        <input id="meta-desc" name="metaDescricao" placeholder="Ex: revisar uma matéria" [(ngModel)]="metaDescricao" />
+        <input id="meta-desc" name="metaDescricao" placeholder="Ex.: revisar crase"
+               [ngModel]="metaDescricao()" (ngModelChange)="metaDescricao.set($event)" />
       </div>
 
       <button type="button" class="btn-acento" (click)="adicionarMeta()"
-              [disabled]="metaMateriaId === null || !metaHora">
-        Adicionar
+              [disabled]="metaMateriaId() === null || !metaHora()">
+        Adicionar meta
       </button>
-    </div>
+    </section>
 
     <!-- Registrar sessão -->
-    <div class="cartao-app">
-      <h2 class="secao-titulo">Registrar sessão</h2>
+    <section class="cartao-app">
+      <h2 class="titulo-secao">Registrar sessão</h2>
+      <p class="explica">Estudou fora do temporizador de Matérias? Registre aqui.</p>
 
       <div class="campo-app">
         <label for="sessao-materia">Matéria</label>
-        <select id="sessao-materia" name="sessaoMateria" [(ngModel)]="sessaoMateriaId">
-          <option [ngValue]="null" disabled>Selecione uma matéria...</option>
+        <select id="sessao-materia" name="sessaoMateria" [ngModel]="sessaoMateriaId()" (ngModelChange)="sessaoMateriaId.set($event)">
+          <option [ngValue]="null" disabled>Selecione uma matéria…</option>
           @for (materia of materias(); track materia.id) {
             <option [ngValue]="materia.id">{{ materia.nome }}</option>
           }
@@ -67,54 +69,69 @@
 
       <div class="campo-app">
         <label for="sessao-min">Minutos estudados</label>
-        <input id="sessao-min" name="sessaoMinutos" type="number" min="1" [(ngModel)]="sessaoMinutos" />
+        <input id="sessao-min" name="sessaoMinutos" type="number" min="1" inputmode="numeric"
+               [ngModel]="sessaoMinutos()" (ngModelChange)="sessaoMinutos.set($event)" />
       </div>
 
       <div class="campo-app">
         <label for="sessao-notas">Anotações (opcional)</label>
-        <input id="sessao-notas" name="sessaoAnotacoes" [(ngModel)]="sessaoAnotacoes" />
+        <input id="sessao-notas" name="sessaoAnotacoes" [ngModel]="sessaoAnotacoes()" (ngModelChange)="sessaoAnotacoes.set($event)" />
       </div>
 
       <button type="button" class="btn-acento" (click)="registrarSessao()"
-              [disabled]="sessaoMateriaId === null || sessaoMinutos <= 0">
-        Registrar
+              [disabled]="sessaoMateriaId() === null || sessaoMinutos() <= 0">
+        Registrar sessão
       </button>
-    </div>
+    </section>
   </div>
 
   <!-- Semana + sessões recentes -->
   <div class="coluna-semana">
     @for (dia of dias; track dia) {
-      <div class="cartao-app cartao-dia">
+      <section class="cartao-app cartao-dia">
         <div class="dia-topo">
-          <strong>📅 {{ dia }}</strong>
-          <small>{{ metasDoDia(dia).length }} metas</small>
+          <h2><app-icone nome="cronograma" [tamanho]="18" /> {{ dia }}</h2>
+          <small>{{ metasPorDia().get(dia)?.length ?? 0 }} {{ metasPorDia().get(dia)?.length === 1 ? 'meta' : 'metas' }}</small>
         </div>
-        @for (meta of metasDoDia(dia); track meta.id) {
-          <div class="meta">
-            <span>
-              <strong>{{ meta.hora }}</strong> — {{ nomeMateria(meta.materiaId) }}
+        @for (meta of metasPorDia().get(dia) ?? []; track meta.id) {
+          <div class="meta" [class]="classeDaMateria(meta.materiaId)">
+            <span class="meta-texto">
+              <strong>{{ meta.hora }}</strong>
+              <span class="ponto-area"></span>
+              {{ nomeMateria(meta.materiaId) }}
               @if (meta.descricao) { <em>· {{ meta.descricao }}</em> }
             </span>
-            <button type="button" class="remover" (click)="removerMeta(meta.id)"
-                    aria-label="Remover meta">✕</button>
+            <button type="button" class="btn-icone" (click)="removerMeta(meta)"
+                    [attr.aria-label]="'Remover a meta de ' + dia + ' às ' + meta.hora" title="Remover meta">
+              <app-icone nome="x" [tamanho]="18" />
+            </button>
           </div>
         } @empty {
           <p class="sem-metas">Sem metas para esse dia.</p>
         }
-      </div>
+      </section>
     }
 
-    <div class="cartao-app">
-      <strong class="secao-titulo">Sessões recentes</strong>
+    <section class="cartao-app">
+      <h2 class="titulo-secao">Sessões recentes</h2>
       @for (sessao of sessoes(); track sessao.id) {
-        <div class="sessao">
-          <span>{{ nomeMateria(sessao.materiaId) }} — {{ sessao.minutos }}min</span>
+        <div class="sessao" [class]="classeDaMateria(sessao.materiaId)">
+          <span class="meta-texto">
+            <span class="ponto-area"></span>
+            {{ nomeMateria(sessao.materiaId) }} · {{ sessao.minutos }} min
+          </span>
           <small>{{ sessao.data | date:'dd/MM' }}</small>
         </div>
       } @empty {
         <p class="sem-metas">Nenhuma sessão registrada ainda.</p>
       }
-    </div>
+    </section>
   </div>
 </div>
+
+@if (metaRemovendo(); as meta) {
+  <div class="aviso-desfazer" role="status">
+    <span>Meta de {{ meta.dia }} às {{ meta.hora }} removida</span>
+    <button type="button" (click)="desfazerRemocao()">Desfazer</button>
+  </div>
+}

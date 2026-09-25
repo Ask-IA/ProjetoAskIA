@@ -1,0 +1,53 @@
+<!-- src/app/layout/conta-acoes/conta-acoes.html -->
+
+<!-- Interruptor do modo escuro: a linha inteira é o botão (alvo de toque maior) -->
+<ng-template #interruptorTema>
+  <button type="button" class="linha-tema" role="switch"
+          [attr.aria-checked]="tema.escuro()" (click)="tema.alternar()">
+    <span class="rotulo-tema">
+      <app-icone nome="lua" [tamanho]="18" />
+      Modo escuro
+    </span>
+    <span class="interruptor" aria-hidden="true"><span class="bolinha"></span></span>
+  </button>
+</ng-template>
+
+@if (modo() === 'menu') {
+  <div class="conta">
+    <ng-container [ngTemplateOutlet]="interruptorTema" />
+
+    <div class="usuario">
+      <span class="avatar" aria-hidden="true">{{ iniciais() }}</span>
+      <span class="identificacao">
+        <b>{{ nome() }}</b>
+        @if (email()) { <small>{{ email() }}</small> }
+      </span>
+      <button type="button" class="btn-icone" (click)="sair()" [disabled]="saindo()"
+              [attr.aria-label]="saindo() ? 'Saindo...' : 'Sair da conta'" title="Sair da conta">
+        <app-icone nome="sair" [tamanho]="18" />
+      </button>
+    </div>
+  </div>
+} @else {
+  <div class="compacto">
+    <button type="button" class="avatar avatar-botao" (click)="alternarMenu()"
+            [attr.aria-expanded]="aberto()" [attr.aria-controls]="idMenu"
+            aria-label="Sua conta: modo escuro e sair">
+      {{ iniciais() }}
+    </button>
+
+    @if (aberto()) {
+      <div class="menu-flutuante" [id]="idMenu">
+        <p class="identificacao">
+          <b>{{ nome() }}</b>
+          @if (email()) { <small>{{ email() }}</small> }
+        </p>
+        <ng-container [ngTemplateOutlet]="interruptorTema" />
+        <button type="button" class="botao-sair" (click)="sair()" [disabled]="saindo()">
+          <app-icone nome="sair" [tamanho]="18" />
+          {{ saindo() ? 'Saindo...' : 'Sair da conta' }}
+        </button>
+      </div>
+    }
+  </div>
+}

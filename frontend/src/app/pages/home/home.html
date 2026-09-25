@@ -1,20 +1,42 @@
-<div class="page-shell">
-  <div class="grid-noise"></div>
-  
-  <app-header></app-header>
+<!-- src/app/pages/home/home.html
+     Landing em fundo branco (24/09). Sempre no modo claro, mesmo para quem
+     escolheu o modo escuro no app: data-tema="claro" fixa as cores aqui. -->
 
-  <main class="relative z-10">
-    <app-hero></app-hero>
-    <app-features></app-features>
-    <app-info></app-info>
-    <app-sobre></app-sobre>
-    <app-confirm></app-confirm>
+<div class="landing" data-tema="claro">
+  <!-- papel quadriculado de caderno atrás do topo -->
+  <div class="quadriculado" aria-hidden="true"></div>
+
+  <app-header />
+
+  <main>
+    <app-hero />
+
+    <!-- Faixa das 4 áreas: as mesmas cores que o aluno vai ver dentro do app -->
+    <section class="faixa-areas" aria-labelledby="titulo-areas">
+      <div class="faixa-conteudo">
+        <div class="faixa-texto">
+          <h2 id="titulo-areas">Organizado pelas 4 áreas do ENEM</h2>
+          <p>Cada dúvida, questão e revisão fica marcada com a área da prova.</p>
+        </div>
+        <ul class="lista-areas">
+          @for (area of areas; track area) {
+            <li class="etiqueta-area" [class]="classeArea(area)"><span class="ponto-area"></span>{{ nomeArea[area] }}</li>
+          }
+        </ul>
+      </div>
+    </section>
+
+    <app-features />
+    <app-info />
+    <app-sobre />
+    <app-confirm />
   </main>
 
-  <footer class="relative z-10 w-full px-5 pb-8 md:px-10">
-    <div class="mx-auto flex max-w-7xl flex-col gap-3 border-t border-sky-100/10 pt-6 text-sm sm:flex-row sm:items-center sm:justify-between">
-      <span class="font-bold">Ask IA</span>
-      <span class="text-slate-400">© Todos os direitos reservados.</span>
-    </div>
+  <footer class="rodape">
+    <span class="rodape-marca">
+      <span class="logo-quadro pequeno"><app-icone nome="logo" [tamanho]="16" /></span>
+      Ask.IA
+    </span>
+    <span>Projeto de TCC · Desenvolvimento de Sistemas · SENAI Salvador · 2026</span>
   </footer>
 </div>

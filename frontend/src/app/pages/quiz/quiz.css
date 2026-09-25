@@ -1,35 +1,67 @@
 /* src/app/pages/quiz/quiz.css */
 
-.inicio { max-width: 420px; }
+.inicio { max-width: 440px; }
 
-.gerando { text-align: center; padding: 40px 24px; color: var(--texto); }
-.pontos { display: flex; gap: 6px; justify-content: center; margin-top: 12px; }
-.pontos span {
-  width: 9px; height: 9px; border-radius: 50%;
-  background: var(--acento);
-  animation: quicar 1s infinite ease-in-out;
-}
-.pontos span:nth-child(2) { animation-delay: .18s; }
-.pontos span:nth-child(3) { animation-delay: .36s; }
-@keyframes quicar { 50% { opacity: .3; transform: translateY(-4px); } }
+.gerando { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 40px 24px; color: var(--texto-suave); text-align: center; }
+.gerando p { margin: 0; color: var(--texto); }
 
-.questao { max-width: 640px; }
-.contagem { color: var(--texto-suave); }
-.questao h2 { color: var(--texto); margin: 8px 0 18px; font-size: 1.2rem; }
+.questao { max-width: 680px; }
+.contagem { margin: 0; color: var(--texto-suave); font-size: .875rem; }
+.questao h2 { margin: 8px 0 18px; font-size: 1.2rem; font-weight: 700; line-height: 1.4; }
 
 .alternativas { display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px; }
 .alternativa {
-  text-align: left; border: 2px solid #E5E7EB; background: #fff;
-  border-radius: 10px; padding: 12px 14px;
-  font-family: inherit; font-size: .95rem; color: var(--texto);
-  cursor: pointer; transition: border-color .15s;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  width: 100%;
+  min-height: 52px;
+  padding: 10px 14px;
+  border: 1.5px solid var(--linha);
+  border-radius: 12px;
+  background: var(--cartao);
+  font-size: 1rem;
+  text-align: left;
+  transition: border-color .15s;
 }
 .alternativa:hover:not(:disabled) { border-color: var(--acento); }
-.alternativa.selecionada { border-color: var(--acento); background: rgba(29, 78, 216, .06); }
-.alternativa.correta { border-color: var(--sucesso); background: rgba(22, 163, 74, .08); }
-.alternativa.errada { border-color: var(--erro); background: rgba(220, 38, 38, .08); }
+.alternativa:disabled { cursor: default; }
+.letra {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 1.5px solid var(--borda-campo);
+  border-radius: 50%;
+  font-size: .8125rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.texto { flex: 1; min-width: 12ch; }
 
-.final { text-align: center; padding: 40px 24px; }
-.final h2 { color: var(--texto); margin-top: 0; }
-.nota { font-size: 2.4rem; font-weight: 700; color: var(--acento); margin: 8px 0; }
-.comentario { color: var(--texto-suave); margin-bottom: 18px; }
+.alternativa.selecionada { border-color: var(--acento); background: var(--acento-suave); }
+.alternativa.selecionada .letra { border-color: var(--acento); background: var(--acento); color: var(--acento-texto); }
+.alternativa.correta { border-color: var(--sucesso); background: var(--sucesso-suave); }
+.alternativa.errada { border-color: var(--erro); background: var(--erro-suave); }
+
+/* O selo escreve o que a cor mostra: ninguém depende só de verde e vermelho */
+.selo { display: inline-flex; align-items: center; gap: 6px; font-size: .875rem; font-weight: 700; }
+.selo.certo { color: var(--sucesso); }
+.selo.errado { color: var(--erro); }
+
+.explicacao {
+  margin: 0 0 18px;
+  padding: 12px 14px;
+  border-left: 3px solid var(--borda-campo);
+  border-radius: 0 10px 10px 0;
+  background: var(--fundo);
+  line-height: 1.5;
+}
+
+.final { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 36px 24px; text-align: center; }
+.final h2 { margin: 0; font-size: 1.25rem; font-weight: 700; }
+/* a nota fica em --texto: azul é só para o que é tocável */
+.nota { margin: 6px 0; font-size: 2.4rem; font-weight: 700; }
+.comentario { margin: 0 0 14px; color: var(--texto-suave); }
+.acoes-final { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
