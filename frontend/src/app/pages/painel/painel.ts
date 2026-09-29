@@ -158,6 +158,8 @@ export class Painel implements OnInit {
     // a ofensiva é um extra: se falhar, o cartão só mostra um traço
     this.estudos.ofensiva().subscribe({ next: dias => this.ofensiva.set(dias), error: () => this.ofensiva.set(null) });
     this.revisao.listarFlashcards().subscribe(lista => this.cartoes.set(lista));
+    // "Continuar: última conversa" vem do histórico real
+    this.askIa.carregarConversas();
   }
 
   perguntaSobre(foco: { topico: string; nome: string }): string {

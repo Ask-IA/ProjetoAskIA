@@ -1,7 +1,8 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, finalize, tap } from 'rxjs';
 import { environment } from '../../environments/environment';
+import { AskIaService } from './ask-ia.service';
 
 export interface LoginRequest {
   email: string;
@@ -34,6 +35,9 @@ export class AuthService {
    */
   readonly usuario = signal<UserResponse | null>(null);
 
+  // O histórico do Ask IA fica em memória; precisa ser esquecido ao sair/trocar de conta.
+  private askIa = inject(AskIaService);
+
   constructor(private http: HttpClient) {}
 
   login(data: LoginRequest): Observable<UserResponse> {
@@ -49,7 +53,10 @@ export class AuthService {
   logout(): Observable<void> {
     // Esquece o usuário mesmo se o backend falhar: a tela volta para o login.
     return this.http.post<void>(`${this.apiUrl}/logout`, {}).pipe(
-      finalize(() => this.usuario.set(null))
+      finalize(() => {
+        this.usuario.set(null);
+        this.askIa.limpar();
+      })
     );
   }
 
@@ -67,6 +74,13 @@ export class AuthService {
 
   private guardar(usuario: UserResponse | null): void {
     // corpo vazio (versão antiga do backend) não apaga o que já sabemos
-    if (usuario?.name) this.usuario.set(usuario);
+    if (!usuario?.name) return;
+
+    // Outra conta na mesma aba (sessão que expirou e alguém entrou de novo, ou login
+    // em outra aba): as conversas em memória são da conta anterior e não podem aparecer.
+    const anterior = this.usuario();
+    if (anterior && anterior.id !== usuario.id) this.askIa.limpar();
+
+    this.usuario.set(usuario);
   }
 }

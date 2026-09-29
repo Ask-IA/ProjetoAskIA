@@ -31,7 +31,12 @@
             </div>
           }
 
-          @if (mensagens().length === 0 && limiteAtingido()) {
+          @if (carregandoConversa()) {
+            <div class="pensando" role="status">
+              <span class="pontos" aria-hidden="true"><span></span><span></span><span></span></span>
+              <span>Abrindo a conversa…</span>
+            </div>
+          } @else if (mensagens().length === 0 && limiteAtingido()) {
             <app-limite-diario [cotaTotal]="cotaTotal" [horarioReinicio]="horarioReinicio" />
           } @else if (mensagens().length === 0) {
             <div class="boas-vindas">
@@ -71,6 +76,10 @@
 
           @if (erro()) {
             <p class="msg-erro-app" id="erro-ask" role="alert">{{ erro() }}</p>
+          }
+
+          @if (erroConversa()) {
+            <p class="msg-erro-app" role="alert">{{ erroConversa() }}</p>
           }
 
           <p class="so-leitor" role="status">{{ anuncio() }}</p>
@@ -120,7 +129,7 @@
             (keydown.enter)="aoApertarEnter($event)"
             [attr.aria-describedby]="erro() ? 'erro-ask' : null"
           ></textarea>
-          <button type="submit" class="botao-enviar" [disabled]="carregando() || !pergunta().trim()"
+          <button type="submit" class="botao-enviar" [disabled]="bloqueado() || !pergunta().trim()"
                   aria-label="Enviar pergunta">
             <app-icone nome="enviar" />
           </button>
@@ -133,6 +142,9 @@
   <aside class="lateral" aria-label="Conversas e resumo do dia">
     <section>
       <h2 class="rotulo-secao">Conversas recentes</h2>
+      @if (erroLista()) {
+        <p class="msg-erro-app" role="alert">Não foi possível carregar suas conversas.</p>
+      }
       <app-lista-conversas [conversas]="recentes()" [atualId]="conversa()?.id ?? null" (abrir)="abrirConversa($event)" />
     </section>
 

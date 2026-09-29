@@ -1,14 +1,17 @@
 // src/app/services/ask-ia.service.ts
 //
-// Ask IA: estado das conversas + chamadas à IA (DADOS FALSOS por enquanto).
+// Ask IA: estado das conversas + chamadas à IA.
 //
-// 1) ESTADO DAS CONVERSAS
-//    Fica aqui, e não no componente, para a conversa não sumir quando o aluno
-//    vai ao Painel e volta. Antes, trocar de tela apagava tudo.
+// 1) HISTÓRICO (REAL, vem do backend)
+//    As conversas são carregadas de GET /api/conversas e cada pergunta com a
+//    resposta é gravada em POST /api/conversas/interacoes. Assim o histórico
+//    sobrevive ao F5 e é sempre o do usuário logado (o backend filtra pela sessão).
+//    O estado vive aqui, e não no componente, para a conversa não sumir quando o
+//    aluno vai ao Painel e volta. Ele é ZERADO ao sair/trocar de conta (limpar()).
 //
-// 2) CONTRATO COM A IA (proposta para o João)
-//    A resposta deixa de ser só uma lista de passos. Para a tela nova, o
-//    prompt precisa devolver também:
+// 2) IA (AINDA DADOS FALSOS)
+//    perguntar() e cotaRestante() continuam mock até o motor de IA ser conectado.
+//    Contrato proposto para a IA (proposta para o João):
 //    - area: 'linguagens' | 'humanas' | 'natureza' | 'matematica' | null
 //    - topico: nome curto do assunto (ex.: "Função afim")
 //    - passos[].formula: opcional, a fórmula do passo em texto
@@ -21,17 +24,19 @@
 // - digite "demora" → a resposta leva 14 s (aparecem os avisos de espera e o Cancelar);
 // - a cota começa com 3 perguntas usadas; na 11ª do dia vem o 429 (limite).
 //
-// TODO (integração): trocar perguntar() e cotaRestante() por HttpClient nos
-// endpoints do João (ex.: POST {apiUrl}/api/ia/perguntar) e carregar as
-// conversas de GET /api/ia/conversas (entidades Conversa e Mensagem do DER).
+// TODO (integração): trocar perguntar() e cotaRestante() pelos endpoints do João
+// (ex.: POST {apiUrl}/api/ia/perguntar). Quando o backend chamar a IA e gravar o
+// histórico sozinho, apague salvar() e o POST /api/conversas/interacoes.
 // TODO (integração): decidir com a equipe a biblioteca de Markdown + fórmulas
 // (ex.: ngx-markdown + KaTeX). Quando entrar, cada fórmula vai num bloco com
 // overflow-x: auto para não estourar a largura no celular.
 
-import { Injectable, computed, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable, of, throwError } from 'rxjs';
-import { delay, mergeMap, tap } from 'rxjs/operators';
-import { AreaEnem } from '../core/areas';
+import { delay, map, mergeMap, switchMap, tap } from 'rxjs/operators';
+import { environment } from '../../environments/environment';
+import { AreaEnem, AREAS } from '../core/areas';
 
 export type ModoAjuda = 'explicar' | 'resolver' | 'plano';
 
@@ -82,24 +87,83 @@ export interface Conversa {
   area: AreaEnem | null;
   atualizadaEm: Date;
   mensagens: Mensagem[];
+  /**
+   * false = veio só na lista (sem mensagens); o conteúdo é buscado ao abrir.
+   * Conversas criadas nesta sessão já nascem com as mensagens em mãos.
+   */
+  carregada: boolean;
+}
+
+// ---- Formatos que o backend devolve (ConversaController) ----
+
+interface ConversaResumoApi {
+  id: number;
+  titulo: string;
+  area: string | null;
+  criadaEm: string;
+  atualizadaEm: string;
+}
+
+interface PaginaApi<T> {
+  conteudo: T[];
+  pagina: number;
+  tamanho: number;
+  totalElementos: number;
+  totalPaginas: number;
+  ultima: boolean;
+}
+
+interface MensagemApi {
+  id: number;
+  autor: 'aluno' | 'ia';
+  modo: string | null;
+  texto: string | null;
+  topico: string | null;
+  passos: { titulo: string; conteudo: string; formula: string | null }[];
+  tenteVoce: { pergunta: string | null; resposta: string | null } | null;
+  criadaEm: string;
+}
+
+interface ConversaDetalheApi extends ConversaResumoApi {
+  mensagens: MensagemApi[];
 }
 
 export const COTA_DIARIA = 10;
 const ATRASO_IA = 1400;      // ms — a IA "pensando", para a tela exibir o carregando
 const ATRASO_LONGO = 14000;  // ms — para testar os avisos de espera
 
+/** Quantas conversas a lista traz de uma vez (o backend aceita até 50). */
+const TAMANHO_DA_LISTA = 50;
+
 @Injectable({ providedIn: 'root' })
 export class AskIaService {
-  private usadasHoje = 3; // começa com 3 usadas para o contador já mostrar algo
-  private proximoId = 100;
+  private http = inject(HttpClient);
+  private readonly api = `${environment.apiUrl}/api/conversas`;
+
+  private usadasHoje = 3; // começa com 3 usadas para o contador já mostrar algo (mock)
+
+  /** Conversas ainda não salvas recebem id negativo; o backend dá o id verdadeiro. */
+  private proximoIdLocal = -1;
+
+  /**
+   * Sobe a cada limpar(). Resposta do servidor que chega depois de um logout
+   * (geração antiga) é descartada, para não misturar contas.
+   */
+  private geracao = 0;
 
   // ================= 1) Estado das conversas =================
 
-  readonly conversas = signal<Conversa[]>(conversasDeExemplo());
+  readonly conversas = signal<Conversa[]>([]);
   readonly idAtual = signal<number | null>(null);
 
   /** Conversa que está esperando a IA (uma pergunta por vez). */
   readonly aguardando = signal<number | null>(null);
+
+  readonly carregandoLista = signal(false);
+  readonly erroLista = signal(false);
+  /** Buscando as mensagens de uma conversa que veio só na lista. */
+  readonly carregandoConversa = signal(false);
+  readonly erroConversa = signal('');
 
   readonly atual = computed(() => this.conversas().find(c => c.id === this.idAtual()) ?? null);
 
@@ -107,31 +171,110 @@ export class AskIaService {
     [...this.conversas()].sort((a, b) => b.atualizadaEm.getTime() - a.atualizadaEm.getTime())
   );
 
-  abrir(id: number): void {
-    if (this.conversas().some(c => c.id === id)) this.idAtual.set(id);
+  /**
+   * Esquece TUDO que está em memória. Chamado ao sair da conta ou ao entrar
+   * com outra. Sem isso, este serviço (que vive enquanto a aba está aberta)
+   * mostraria as conversas do usuário anterior.
+   */
+  limpar(): void {
+    this.geracao++;
+    this.conversas.set([]);
+    this.idAtual.set(null);
+    this.aguardando.set(null);
+    this.carregandoLista.set(false);
+    this.erroLista.set(false);
+    this.carregandoConversa.set(false);
+    this.erroConversa.set('');
+  }
+
+  /** Busca a lista de conversas do usuário logado (mais recentes primeiro). */
+  carregarConversas(): void {
+    const geracao = this.geracao;
+    this.carregandoLista.set(true);
+    this.erroLista.set(false);
+
+    this.http
+      .get<PaginaApi<ConversaResumoApi>>(this.api, { params: { page: 0, size: TAMANHO_DA_LISTA } })
+      .subscribe({
+        next: pagina => {
+          if (geracao !== this.geracao) return;
+          this.mesclarLista(pagina.conteudo);
+          this.carregandoLista.set(false);
+        },
+        error: () => {
+          if (geracao !== this.geracao) return;
+          this.erroLista.set(true);
+          this.carregandoLista.set(false);
+        },
+      });
+  }
+
+  /**
+   * Abre a conversa. Se as mensagens ainda não foram buscadas, busca no backend.
+   * `aoCarregar` roda quando o conteúdo já está na tela (a tela usa para rolar até o fim).
+   */
+  abrir(id: number, aoCarregar?: () => void): void {
+    this.idAtual.set(id);
+    this.erroConversa.set('');
+
+    const existente = this.conversas().find(c => c.id === id);
+    if (id < 0 || existente?.carregada) {
+      aoCarregar?.();
+      return;
+    }
+
+    const geracao = this.geracao;
+    this.carregandoConversa.set(true);
+    this.http.get<ConversaDetalheApi>(`${this.api}/${id}`).subscribe({
+      next: detalhe => {
+        if (geracao !== this.geracao) return;
+        this.guardarDetalhe(detalhe);
+        if (this.idAtual() === id) this.carregandoConversa.set(false);
+        aoCarregar?.();
+      },
+      error: (erro: { status?: number }) => {
+        if (geracao !== this.geracao) return;
+        if (this.idAtual() !== id) return; // o aluno já foi para outra conversa
+        this.carregandoConversa.set(false);
+        if (erro?.status === 404) {
+          this.idAtual.set(null); // não existe (ou é de outro usuário)
+        } else {
+          this.erroConversa.set('Não foi possível abrir essa conversa agora.');
+        }
+      },
+    });
   }
 
   nova(): void {
     this.idAtual.set(null);
+    this.erroConversa.set('');
   }
 
   /**
-   * Envia a pergunta e guarda pergunta e resposta na conversa certa.
+   * Envia a pergunta, pede a resposta à IA e SALVA os dois no backend.
    * A conversa é "capturada" no envio: se o aluno trocar de tela ou de
    * conversa enquanto a IA pensa, a resposta cai no lugar em que foi pedida.
-   * Cancelar (unsubscribe) ou falhar tira a pergunta da conversa.
+   * Cancelar (unsubscribe) ou falhar (na IA ou ao salvar) tira a pergunta da conversa.
+   * A resposta só aparece na tela depois de salva: o que se vê é o que está no histórico.
    */
   enviarPergunta(texto: string, modo: ModoAjuda): Observable<RespostaIA> {
     const conversaId = this.registrarPergunta(texto);
     this.aguardando.set(conversaId);
 
     return this.perguntar(texto, modo).pipe(
+      switchMap(resposta =>
+        this.salvar(conversaId, texto, modo, resposta).pipe(map(resumo => ({ resposta, resumo })))
+      ),
       tap({
-        next: resposta => this.registrarResposta(conversaId, resposta),
+        next: ({ resposta, resumo }) => {
+          const idReal = this.confirmarConversa(conversaId, resumo);
+          this.registrarResposta(idReal, resposta);
+        },
         error: () => this.removerUltimaPergunta(conversaId),
         unsubscribe: () => this.removerUltimaPergunta(conversaId),
         finalize: () => this.aguardando.set(null),
-      })
+      }),
+      map(({ resposta }) => resposta)
     );
   }
 
@@ -146,6 +289,68 @@ export class AskIaService {
     this.alterarMensagemIa(indiceMensagem, m => ({ ...m, tenteVoceAberto: true }));
   }
 
+  /** POST /api/conversas/interacoes: grava pergunta + resposta e devolve a conversa atualizada. */
+  private salvar(conversaId: number, pergunta: string, modo: ModoAjuda, resposta: RespostaIA): Observable<ConversaResumoApi> {
+    const corpo = {
+      conversaId: conversaId > 0 ? conversaId : null, // id negativo = conversa nova
+      modo,
+      pergunta,
+      resposta: {
+        area: resposta.area,
+        topico: resposta.topico,
+        passos: resposta.passos.map(p => ({ titulo: p.titulo, conteudo: p.conteudo, formula: p.formula ?? null })),
+        tenteVoce: resposta.tenteVoce,
+      },
+    };
+    return this.http.post<ConversaResumoApi>(`${this.api}/interacoes`, corpo);
+  }
+
+  /** Troca o id provisório pelo id real e copia título, área e data que o servidor definiu. */
+  private confirmarConversa(idLocal: number, resumo: ConversaResumoApi): number {
+    const idReal = resumo.id;
+    this.conversas.update(lista =>
+      lista.map(c =>
+        c.id === idLocal
+          ? { ...c, id: idReal, titulo: resumo.titulo, area: paraArea(resumo.area) ?? c.area, atualizadaEm: paraData(resumo.atualizadaEm) }
+          : c
+      )
+    );
+    if (this.idAtual() === idLocal) this.idAtual.set(idReal);
+    if (this.aguardando() === idLocal) this.aguardando.set(idReal);
+    return idReal;
+  }
+
+  /** Junta a lista do servidor com o que já está na tela (não perde mensagens já abertas). */
+  private mesclarLista(itens: ConversaResumoApi[]): void {
+    this.conversas.update(atuais => {
+      const porId = new Map(atuais.map(c => [c.id, c]));
+      const doServidor = itens.map(item => {
+        const local = porId.get(item.id);
+        return {
+          ...paraConversa(item),
+          mensagens: local?.mensagens ?? [],
+          carregada: local?.carregada ?? false,
+        };
+      });
+      const emEnvio = atuais.filter(c => c.id < 0); // conversa nova esperando ser salva
+      return [...doServidor, ...emEnvio];
+    });
+  }
+
+  private guardarDetalhe(detalhe: ConversaDetalheApi): void {
+    const base = paraConversa(detalhe);
+    const conversa: Conversa = {
+      ...base,
+      mensagens: detalhe.mensagens.map(m => paraMensagem(m, base.area)),
+      carregada: true,
+    };
+    this.conversas.update(lista =>
+      lista.some(c => c.id === conversa.id)
+        ? lista.map(c => (c.id === conversa.id ? conversa : c))
+        : [...lista, conversa]
+    );
+  }
+
   /** Põe a pergunta na conversa aberta (ou cria uma, se for a primeira). Devolve o id. */
   private registrarPergunta(texto: string): number {
     const mensagem: MensagemAluno = { autor: 'aluno', texto };
@@ -153,11 +358,12 @@ export class AskIaService {
 
     if (id === null) {
       const nova: Conversa = {
-        id: this.proximoId++,
+        id: this.proximoIdLocal--,
         titulo: resumirTitulo(texto),
         area: null,
         atualizadaEm: new Date(),
         mensagens: [mensagem],
+        carregada: true,
       };
       this.conversas.update(lista => [...lista, nova]);
       this.idAtual.set(nova.id);
@@ -249,6 +455,52 @@ export class AskIaService {
   horarioReinicio(): string {
     return '00:00';
   }
+}
+
+// ================= Conversão backend → tela =================
+
+function paraArea(area: string | null): AreaEnem | null {
+  return AREAS.includes(area as AreaEnem) ? (area as AreaEnem) : null;
+}
+
+/** Lê a data ISO do backend (com fuso). Corta a fração a milissegundos: o Safari não aceita mais que isso. */
+function paraData(iso: string): Date {
+  return new Date(iso.replace(/(\.\d{3})\d+/, '$1'));
+}
+
+function paraConversa(api: ConversaResumoApi): Omit<Conversa, 'mensagens' | 'carregada'> {
+  return {
+    id: api.id,
+    titulo: api.titulo,
+    area: paraArea(api.area),
+    atualizadaEm: paraData(api.atualizadaEm),
+  };
+}
+
+function paraMensagem(api: MensagemApi, area: AreaEnem | null): Mensagem {
+  if (api.autor === 'aluno') {
+    return { autor: 'aluno', texto: api.texto ?? '' };
+  }
+  const passos: PassoResposta[] = api.passos.map(p => ({
+    titulo: p.titulo,
+    conteudo: p.conteudo,
+    ...(p.formula ? { formula: p.formula } : {}),
+  }));
+  return {
+    autor: 'ia',
+    passosVisiveis: passos.length, // no histórico, todos os passos já aparecem
+    tenteVoceAberto: false,
+    resposta: {
+      area,
+      topico: api.topico,
+      modo: (api.modo as ModoAjuda | null) ?? 'explicar',
+      passos,
+      tenteVoce: api.tenteVoce
+        ? { pergunta: api.tenteVoce.pergunta ?? '', resposta: api.tenteVoce.resposta ?? '' }
+        : null,
+      cotaRestante: COTA_DIARIA,
+    },
+  };
 }
 
 // ================= Conteúdo de demonstração =================
@@ -442,46 +694,4 @@ function montarResposta(pergunta: string, texto: string, modo: ModoAjuda): Omit<
       },
     ],
   };
-}
-
-/** Três conversas antigas, para a lista "Conversas recentes" não nascer vazia. */
-function conversasDeExemplo(): Conversa[] {
-  const diasAtras = (dias: number, hora: number) => {
-    const data = new Date();
-    data.setDate(data.getDate() - dias);
-    data.setHours(hora, 10, 0, 0);
-    return data;
-  };
-
-  const exemplo = (id: number, pergunta: string, indiceTema: number, quando: Date): Conversa => {
-    const tema = TEMAS[indiceTema];
-    return {
-      id,
-      titulo: resumirTitulo(pergunta),
-      area: tema.area,
-      atualizadaEm: quando,
-      mensagens: [
-        { autor: 'aluno', texto: pergunta },
-        {
-          autor: 'ia',
-          passosVisiveis: tema.passos.length,
-          tenteVoceAberto: false,
-          resposta: {
-            area: tema.area,
-            topico: tema.topico,
-            modo: 'explicar',
-            passos: tema.passos,
-            tenteVoce: tema.tenteVoce,
-            cotaRestante: COTA_DIARIA,
-          },
-        },
-      ],
-    };
-  };
-
-  return [
-    exemplo(1, 'Quando usar crase?', 1, diasAtras(1, 20)),
-    exemplo(2, 'O que foi a Era Vargas?', 2, diasAtras(1, 18)),
-    exemplo(3, 'Me explique a primeira lei de Newton', 3, diasAtras(3, 19)),
-  ];
 }

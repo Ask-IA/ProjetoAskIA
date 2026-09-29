@@ -90,9 +90,14 @@ export class AskIa implements OnInit, OnDestroy {
   cartoesParaRevisar = signal(0);
 
   readonly conversa = this.service.atual;
+  readonly carregandoConversa = this.service.carregandoConversa;
+  readonly erroConversa = this.service.erroConversa;
+  readonly erroLista = this.service.erroLista;
   readonly recentes = computed(() => this.service.recentes().slice(0, 6));
   readonly mensagens = computed(() => this.conversa()?.mensagens ?? []);
   readonly carregando = computed(() => this.service.aguardando() !== null);
+  /** Não deixa perguntar enquanto a IA responde OU enquanto uma conversa antiga ainda está abrindo. */
+  readonly bloqueado = computed(() => this.carregando() || this.service.carregandoConversa());
   readonly pensandoAqui = computed(() => {
     const id = this.service.aguardando();
     return id !== null && id === this.conversa()?.id;
@@ -105,6 +110,9 @@ export class AskIa implements OnInit, OnDestroy {
   private temporizadores: ReturnType<typeof setTimeout>[] = [];
 
   ngOnInit(): void {
+    // Histórico real: sempre busca ao entrar (o serviço junta com o que já está na tela)
+    this.service.carregarConversas();
+
     this.service.cotaRestante().subscribe({
       next: restante => {
         this.cotaRestante.set(restante);
@@ -118,7 +126,7 @@ export class AskIa implements OnInit, OnDestroy {
     // ?pergunta=... → já deixa a dúvida escrita ("Onde focar agora")
     const parametros = this.rota.snapshot.queryParamMap;
     const conversaId = Number(parametros.get('conversa'));
-    if (conversaId) this.service.abrir(conversaId);
+    if (conversaId) this.service.abrir(conversaId, () => this.rolarAoAbrir());
     const perguntaPronta = parametros.get('pergunta');
     if (perguntaPronta) {
       this.service.nova();
@@ -171,7 +179,7 @@ export class AskIa implements OnInit, OnDestroy {
 
   enviar(): void {
     const texto = this.pergunta().trim();
-    if (!texto || this.carregando() || this.limiteAtingido()) return;
+    if (!texto || this.bloqueado() || this.limiteAtingido()) return;
 
     this.erro.set('');
     this.anuncio.set('');
@@ -221,10 +229,10 @@ export class AskIa implements OnInit, OnDestroy {
   }
 
   abrirConversa(id: number): void {
-    this.service.abrir(id);
     this.erro.set('');
     this.mostrarHistorico.set(false);
-    afterNextRender(() => this.rolarParaFim('auto'), { injector: this.injector });
+    // se a conversa ainda não foi baixada, o serviço chama de volta quando ela chegar
+    this.service.abrir(id, () => this.rolarAoAbrir());
   }
 
   alternarHistorico(): void {
@@ -247,6 +255,10 @@ export class AskIa implements OnInit, OnDestroy {
     this.temporizadores.forEach(clearTimeout);
     this.temporizadores = [];
     this.fasePensando.set(0);
+  }
+
+  private rolarAoAbrir(): void {
+    afterNextRender(() => this.rolarParaFim('auto'), { injector: this.injector });
   }
 
   private rolarParaFim(comportamento: ScrollBehavior = 'smooth'): void {
