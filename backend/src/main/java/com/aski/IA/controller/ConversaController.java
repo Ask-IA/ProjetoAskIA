@@ -5,6 +5,8 @@ import org.springframework.web.bind.annotation.*;
 
 import com.aski.IA.dto.ConversaDetalheDTO;
 import com.aski.IA.dto.ConversaResumoDTO;
+import com.aski.IA.dto.CotaDTO;
+import com.aski.IA.dto.InteracaoResponseDTO;
 import com.aski.IA.dto.InteracaoRequestDTO;
 import com.aski.IA.dto.PaginaDTO;
 import com.aski.IA.service.ConversaService;
@@ -32,6 +34,12 @@ public class ConversaController {
         return conversaService.listar(usuarioId, page, size);
     }
 
+    /** GET /api/conversas/cota — quantas perguntas o usuário logado ainda pode fazer hoje. */
+    @GetMapping("/cota")
+    public CotaDTO cota(@SessionAttribute("userId") Long usuarioId) {
+        return conversaService.cota(usuarioId);
+    }
+
     /** GET /api/conversas/{id} — conversa com todas as mensagens. */
     @GetMapping("/{conversaId}")
     public ConversaDetalheDTO detalhar(@SessionAttribute("userId") Long usuarioId,
@@ -49,7 +57,7 @@ public class ConversaController {
      */
     @PostMapping("/interacoes")
     @ResponseStatus(HttpStatus.CREATED)
-    public ConversaResumoDTO registrar(@SessionAttribute("userId") Long usuarioId,
+    public InteracaoResponseDTO registrar(@SessionAttribute("userId") Long usuarioId,
                                        @RequestBody InteracaoRequestDTO dto) {
         return conversaService.registrarInteracao(usuarioId, dto);
     }

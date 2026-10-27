@@ -33,10 +33,14 @@ public class ResumoService {
 
     private final MateriaRepository materiaRepository;
     private final SessaoEstudoRepository sessaoRepository;
+    private final GamificacaoService gamificacaoService;
 
-    public ResumoService(MateriaRepository materiaRepository, SessaoEstudoRepository sessaoRepository) {
+    public ResumoService(MateriaRepository materiaRepository,
+                         SessaoEstudoRepository sessaoRepository,
+                         GamificacaoService gamificacaoService) {
         this.materiaRepository = materiaRepository;
         this.sessaoRepository = sessaoRepository;
+        this.gamificacaoService = gamificacaoService;
     }
 
     @Transactional(readOnly = true)
@@ -81,7 +85,8 @@ public class ResumoService {
     public ProgressoDTO progresso(Long usuarioId) {
         List<MateriaModel> materias = materiaRepository.findByUsuarioIdOrderByIdAsc(usuarioId);
         List<SessaoEstudoModel> sessoes = sessaoRepository.findByUsuarioIdOrderByDataDesc(usuarioId);
-        return new ProgressoDTO(ofensiva(sessoes), desempenhos(materias, sessoes));
+        // a ofensiva tem UMA definição só (GamificacaoService): pergunta ao Ask IA OU sessão de estudo
+        return new ProgressoDTO(gamificacaoService.diasSeguidos(usuarioId), desempenhos(materias, sessoes));
     }
 
     // ---------- cálculos ----------
@@ -113,21 +118,5 @@ public class ResumoService {
             resultado.add(new MinutosDiaDTO(dia.format(DIA_MES), minutos));
         }
         return resultado;
-    }
-
-    /** Dias seguidos com pelo menos uma sessão. Hoje ainda sem sessão não quebra a sequência. */
-    private int ofensiva(List<SessaoEstudoModel> sessoes) {
-        int dias = 0;
-        LocalDate hoje = LocalDate.now();
-        for (int i = 0; i < 30; i++) {
-            LocalDate dia = hoje.minusDays(i);
-            boolean temSessao = sessoes.stream().anyMatch(s -> s.getData().toLocalDate().equals(dia));
-            if (temSessao) {
-                dias++;
-            } else if (i > 0) {
-                break;
-            }
-        }
-        return dias;
     }
 }

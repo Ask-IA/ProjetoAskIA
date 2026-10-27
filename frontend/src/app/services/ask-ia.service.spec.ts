@@ -66,7 +66,7 @@ describe('AskIaService (histórico real)', () => {
   });
 
   it('pergunta nova: salva no backend e troca o id provisório pelo real', () => {
-    let recebida: unknown;
+    let recebida: { cotaRestante: number } | undefined;
     service.enviarPergunta('Como usar crase corretamente?', 'explicar').subscribe(r => (recebida = r));
     expect(service.idAtual()).toBeLessThan(0); // provisório
     expect(service.aguardando()).toBe(service.idAtual());
@@ -81,9 +81,10 @@ describe('AskIaService (histórico real)', () => {
     expect(req.request.body.resposta.passos.length).toBeGreaterThan(0);
     expect(recebida).toBeUndefined(); // ainda não: só aparece depois de salvar
 
-    req.flush(resumo(42, 'Como usar crase corretamente?'));
+    req.flush({ conversa: resumo(42, 'Como usar crase corretamente?'), cotaRestante: 6 });
 
     expect(recebida).toBeDefined();
+    expect(recebida!.cotaRestante).toBe(6); // a cota é a do servidor, não a do mock
     expect(service.idAtual()).toBe(42);
     expect(service.aguardando()).toBeNull();
     expect(service.conversas().map(c => c.id)).toEqual([42]);
@@ -100,7 +101,7 @@ describe('AskIaService (histórico real)', () => {
     vi.advanceTimersByTime(2000);
     const req = http.expectOne(`${API}/interacoes`);
     expect(req.request.body.conversaId).toBe(7);
-    req.flush(resumo(7));
+    req.flush({ conversa: resumo(7), cotaRestante: 5 });
     expect(service.conversas().length).toBe(1);
   });
 
@@ -113,6 +114,26 @@ describe('AskIaService (histórico real)', () => {
     expect(falhou).toBe(true);
     expect(service.conversas().length).toBe(0);
     expect(service.idAtual()).toBeNull();
+    expect(service.aguardando()).toBeNull();
+  });
+
+  it('cotaRestante vem do backend, por usuário (GET /cota)', () => {
+    let restante = -1;
+    service.cotaRestante().subscribe(r => (restante = r));
+    const req = http.expectOne(`${API}/cota`);
+    expect(req.request.method).toBe('GET');
+    req.flush({ limite: 10, usadas: 4, restantes: 6 });
+    expect(restante).toBe(6);
+  });
+
+  it('429 do backend (limite do dia) propaga o erro e não deixa pergunta pendurada', () => {
+    let status = 0;
+    service.enviarPergunta('Mais uma pergunta', 'explicar').subscribe({ error: e => (status = e.status) });
+    vi.advanceTimersByTime(2000);
+    http.expectOne(`${API}/interacoes`).flush({ message: 'Limite diário' }, { status: 429, statusText: 'Too Many Requests' });
+
+    expect(status).toBe(429);
+    expect(service.conversas().length).toBe(0);
     expect(service.aguardando()).toBeNull();
   });
 

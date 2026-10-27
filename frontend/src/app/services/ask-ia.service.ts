@@ -9,8 +9,13 @@
 //    O estado vive aqui, e não no componente, para a conversa não sumir quando o
 //    aluno vai ao Painel e volta. Ele é ZERADO ao sair/trocar de conta (limpar()).
 //
-// 2) IA (AINDA DADOS FALSOS)
-//    perguntar() e cotaRestante() continuam mock até o motor de IA ser conectado.
+// 2) COTA DIÁRIA (REAL, POR USUÁRIO)
+//    Quem conta e barra é o BACKEND: GET /api/conversas/cota diz quantas perguntas
+//    restam hoje e o POST /interacoes responde 429 quando acabam. A conta é feita
+//    sobre as perguntas que o próprio usuário gravou, então cada conta tem a sua.
+//
+// 3) IA (AINDA DADOS FALSOS)
+//    perguntar() continua mock até o motor de IA ser conectado.
 //    Contrato proposto para a IA (proposta para o João):
 //    - area: 'linguagens' | 'humanas' | 'natureza' | 'matematica' | null
 //    - topico: nome curto do assunto (ex.: "Função afim")
@@ -22,7 +27,7 @@
 // Para TESTAR na tela:
 // - digite "erro"   → o mock devolve falha 500 (o texto continua no campo);
 // - digite "demora" → a resposta leva 14 s (aparecem os avisos de espera e o Cancelar);
-// - a cota começa com 3 perguntas usadas; na 11ª do dia vem o 429 (limite).
+// - a cota (10 por dia, por usuário) vem do backend; na 11ª pergunta do dia vem o 429.
 //
 // TODO (integração): trocar perguntar() e cotaRestante() pelos endpoints do João
 // (ex.: POST {apiUrl}/api/ia/perguntar). Quando o backend chamar a IA e gravar o
@@ -104,6 +109,11 @@ interface ConversaResumoApi {
   atualizadaEm: string;
 }
 
+interface InteracaoApi {
+  conversa: ConversaResumoApi;
+  cotaRestante: number;
+}
+
 interface PaginaApi<T> {
   conteudo: T[];
   pagina: number;
@@ -139,8 +149,6 @@ const TAMANHO_DA_LISTA = 50;
 export class AskIaService {
   private http = inject(HttpClient);
   private readonly api = `${environment.apiUrl}/api/conversas`;
-
-  private usadasHoje = 3; // começa com 3 usadas para o contador já mostrar algo (mock)
 
   /** Conversas ainda não salvas recebem id negativo; o backend dá o id verdadeiro. */
   private proximoIdLocal = -1;
@@ -263,7 +271,10 @@ export class AskIaService {
 
     return this.perguntar(texto, modo).pipe(
       switchMap(resposta =>
-        this.salvar(conversaId, texto, modo, resposta).pipe(map(resumo => ({ resposta, resumo })))
+        this.salvar(conversaId, texto, modo, resposta).pipe(
+          // a cota restante vem do servidor (a do mock não vale)
+          map(salvo => ({ resposta: { ...resposta, cotaRestante: salvo.cotaRestante }, resumo: salvo.conversa }))
+        )
       ),
       tap({
         next: ({ resposta, resumo }) => {
@@ -289,8 +300,11 @@ export class AskIaService {
     this.alterarMensagemIa(indiceMensagem, m => ({ ...m, tenteVoceAberto: true }));
   }
 
-  /** POST /api/conversas/interacoes: grava pergunta + resposta e devolve a conversa atualizada. */
-  private salvar(conversaId: number, pergunta: string, modo: ModoAjuda, resposta: RespostaIA): Observable<ConversaResumoApi> {
+  /**
+   * POST /api/conversas/interacoes: grava pergunta + resposta e devolve a conversa atualizada
+   * e a cota que sobrou. Responde 429 (e não grava nada) se o limite do dia já foi atingido.
+   */
+  private salvar(conversaId: number, pergunta: string, modo: ModoAjuda, resposta: RespostaIA): Observable<InteracaoApi> {
     const corpo = {
       conversaId: conversaId > 0 ? conversaId : null, // id negativo = conversa nova
       modo,
@@ -302,7 +316,7 @@ export class AskIaService {
         tenteVoce: resposta.tenteVoce,
       },
     };
-    return this.http.post<ConversaResumoApi>(`${this.api}/interacoes`, corpo);
+    return this.http.post<InteracaoApi>(`${this.api}/interacoes`, corpo);
   }
 
   /** Troca o id provisório pelo id real e copia título, área e data que o servidor definiu. */
@@ -420,8 +434,11 @@ export class AskIaService {
 
   // ================= 2) Chamadas à IA (mock) =================
 
+  /** Quantas perguntas o usuário logado ainda pode fazer hoje (GET /api/conversas/cota). */
   cotaRestante(): Observable<number> {
-    return of(COTA_DIARIA - this.usadasHoje).pipe(delay(200));
+    return this.http.get<{ limite: number; usadas: number; restantes: number }>(`${this.api}/cota`).pipe(
+      map(cota => cota.restantes)
+    );
   }
 
   perguntar(pergunta: string, modo: ModoAjuda): Observable<RespostaIA> {
@@ -435,18 +452,11 @@ export class AskIaService {
       );
     }
 
-    // Cota esgotada: mesmo comportamento previsto para o backend real
-    if (this.usadasHoje >= COTA_DIARIA) {
-      return of(null).pipe(
-        delay(300),
-        mergeMap(() => throwError(() => ({ status: 429, message: 'Limite diário atingido.' })))
-      );
-    }
-
-    this.usadasHoje++;
+    // A cota NÃO é checada aqui: o backend confere e barra (429) ao salvar.
+    // TODO: quando a IA de verdade existir, o backend deve checar a cota ANTES de chamar o modelo.
     const resposta: RespostaIA = {
       ...montarResposta(pergunta, texto, modo),
-      cotaRestante: COTA_DIARIA - this.usadasHoje,
+      cotaRestante: 0, // provisório: enviarPergunta troca pelo valor real do servidor
     };
     return of(resposta).pipe(delay(texto === 'demora' ? ATRASO_LONGO : ATRASO_IA));
   }

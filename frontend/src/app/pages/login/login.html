@@ -12,8 +12,8 @@
 
     <form id="login-form" class="auth-form" novalidate [formGroup]="form" (ngSubmit)="onSubmit()">
       <div class="campo-app">
-        <label for="email">E-mail</label>
-        <input type="email" id="email" formControlName="email" autocomplete="username" required />
+        <label for="login">Nome ou e-mail</label>
+        <input type="text" id="login" formControlName="login" autocomplete="username" autocapitalize="none" required />
       </div>
 
       <div class="campo-app">

@@ -26,7 +26,8 @@ export class Login {
     private router: Router
   ) {
     this.form = this.fb.group({
-      email: ['', [Validators.required, Validators.email]],
+      // e-mail OU nome: por isso não tem Validators.email
+      login: ['', [Validators.required]],
       password: ['', Validators.required],
     });
   }
@@ -35,12 +36,13 @@ export class Login {
     this.errorMessage.set('');
 
     if (this.form.invalid) {
-      this.errorMessage.set('Preencha e-mail e senha corretamente.');
+      this.errorMessage.set('Preencha seu nome ou e-mail e a senha.');
       return;
     }
 
     this.loading.set(true);
-    this.authService.login(this.form.value).subscribe({
+    const { login, password } = this.form.value;
+    this.authService.login({ login: login.trim(), password }).subscribe({
       next: () => {
         this.loading.set(false);
         this.router.navigateByUrl('/app');

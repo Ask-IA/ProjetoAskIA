@@ -5,7 +5,8 @@ import { environment } from '../../environments/environment';
 import { AskIaService } from './ask-ia.service';
 
 export interface LoginRequest {
-  email: string;
+  /** E-mail OU nome do usuário (o backend decide pelo "@"). */
+  login: string;
   password: string;
 }
 

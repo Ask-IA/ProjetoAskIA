@@ -5,7 +5,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import com.aski.IA.exception.LimiteDiarioExcedidoException;
 import com.aski.IA.exception.RecursoNaoEncontradoException;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import java.util.Map;
 
@@ -24,6 +26,22 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, String>> handleIllegalArgument(IllegalArgumentException ex) {
         return ResponseEntity.badRequest().body(Map.of("message", ex.getMessage()));
+    }
+
+    /** Cota diária de perguntas esgotada → 429 (o front mostra a tela de limite) */
+    @ExceptionHandler(LimiteDiarioExcedidoException.class)
+    public ResponseEntity<Map<String, String>> handleLimite(LimiteDiarioExcedidoException ex) {
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(Map.of("message", ex.getMessage()));
+    }
+
+    /**
+     * Última barreira contra duplicados: duas pessoas cadastrando o mesmo nome/e-mail no
+     * mesmo instante passam pela checagem do serviço, mas o índice único do banco barra. → 409
+     */
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<Map<String, String>> handleIntegridade(DataIntegrityViolationException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(Map.of("message", "Esse nome ou e-mail já está em uso."));
     }
 
     /** Recurso inexistente ou de outro usuário → 404 */

@@ -42,7 +42,8 @@ export class Cadastro {
     this.form = this.fb.group(
       {
         email: ['', [Validators.required, Validators.email]],
-        name: ['', Validators.required],
+        // o nome também serve para entrar; "@" é o que separa nome de e-mail no login
+        name: ['', [Validators.required, Validators.pattern(/^[^@]+$/)]],
         password: ['', [Validators.required, Validators.minLength(TAMANHO_MINIMO_SENHA)]],
         confirmPassword: ['', Validators.required],
       },
@@ -69,7 +70,9 @@ export class Cadastro {
       if (this.form.get('email')?.invalid) {
         this.errorMessage.set('Informe um e-mail válido.');
       } else if (this.form.get('name')?.invalid) {
-        this.errorMessage.set('Informe seu nome.');
+        this.errorMessage.set(
+          this.form.get('name')?.hasError('pattern') ? 'O nome não pode conter @.' : 'Informe seu nome.'
+        );
       } else if (senha?.hasError('required')) {
         this.errorMessage.set('Informe uma senha.');
       } else if (senha?.hasError('minlength')) {

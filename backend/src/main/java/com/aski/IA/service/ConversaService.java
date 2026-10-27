@@ -1,10 +1,12 @@
 package com.aski.IA.service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.Locale;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -14,12 +16,15 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.aski.IA.dto.ConversaDetalheDTO;
 import com.aski.IA.dto.ConversaResumoDTO;
+import com.aski.IA.dto.CotaDTO;
 import com.aski.IA.dto.InteracaoRequestDTO;
+import com.aski.IA.dto.InteracaoResponseDTO;
 import com.aski.IA.dto.MensagemResponseDTO;
 import com.aski.IA.dto.PaginaDTO;
 import com.aski.IA.dto.PassoDTO;
 import com.aski.IA.dto.RespostaIaDTO;
 import com.aski.IA.dto.TenteVoceDTO;
+import com.aski.IA.exception.LimiteDiarioExcedidoException;
 import com.aski.IA.exception.RecursoNaoEncontradoException;
 import com.aski.IA.model.AreaEnem;
 import com.aski.IA.model.AutorMensagem;
@@ -51,13 +56,19 @@ public class ConversaService {
     private final ConversaRepository conversaRepository;
     private final MensagemRepository mensagemRepository;
     private final UserRepository userRepository;
+    private final int limiteDiario;
+    private final ZoneId fusoDoLimite;
 
     public ConversaService(ConversaRepository conversaRepository,
                            MensagemRepository mensagemRepository,
-                           UserRepository userRepository) {
+                           UserRepository userRepository,
+                           @Value("${app.ia.limite-diario:10}") int limiteDiario,
+                           @Value("${app.ia.fuso:America/Sao_Paulo}") String fuso) {
         this.conversaRepository = conversaRepository;
         this.mensagemRepository = mensagemRepository;
         this.userRepository = userRepository;
+        this.limiteDiario = limiteDiario;
+        this.fusoDoLimite = ZoneId.of(fuso);
     }
 
     // ---------- leitura ----------
@@ -88,6 +99,16 @@ public class ConversaService {
                 iso(conversa.getCriadaEm()), iso(conversa.getAtualizadaEm()), mensagens);
     }
 
+    /**
+     * Cota de hoje DESTE usuário. Cada usuário tem a sua: a conta é feita em cima das
+     * perguntas que ele mesmo gravou (mensagens do ALUNO) desde a meia-noite.
+     */
+    @Transactional(readOnly = true)
+    public CotaDTO cota(Long usuarioId) {
+        int usadas = (int) mensagemRepository.contarDesde(usuarioId, AutorMensagem.ALUNO, inicioDoDia());
+        return new CotaDTO(limiteDiario, usadas, Math.max(limiteDiario - usadas, 0));
+    }
+
     // ---------- escrita ----------
 
     /**
@@ -96,7 +117,7 @@ public class ConversaService {
      * mesma transação: nunca sobra pergunta sem resposta.
      */
     @Transactional
-    public ConversaResumoDTO registrarInteracao(Long usuarioId, InteracaoRequestDTO dto) {
+    public InteracaoResponseDTO registrarInteracao(Long usuarioId, InteracaoRequestDTO dto) {
         String pergunta = exigirTexto(dto.pergunta(), "Informe a pergunta.");
         if (pergunta.length() > TAMANHO_MAXIMO_PERGUNTA) {
             throw new IllegalArgumentException("A pergunta é longa demais.");
@@ -106,6 +127,12 @@ public class ConversaService {
         AreaEnem area = resposta.area() == null || resposta.area().isBlank()
                 ? null
                 : converter(AreaEnem.class, resposta.area(), "Área inválida.");
+
+        // Antes de criar qualquer coisa: sem cota, nada é gravado (nem conversa vazia).
+        CotaDTO cotaAntes = cota(usuarioId);
+        if (cotaAntes.restantes() <= 0) {
+            throw new LimiteDiarioExcedidoException("Limite diário de " + limiteDiario + " perguntas atingido.");
+        }
 
         ConversaModel conversa = dto.conversaId() == null
                 ? novaConversa(usuarioId, pergunta)
@@ -125,10 +152,21 @@ public class ConversaService {
         if (conversa.getArea() == null && area != null) {
             conversa.setArea(area); // a conversa fica com a primeira área identificada
         }
-        return paraResumo(conversaRepository.save(conversa));
+        ConversaResumoDTO resumo = paraResumo(conversaRepository.save(conversa));
+        return new InteracaoResponseDTO(resumo, cotaAntes.restantes() - 1);
     }
 
     // ---------- auxiliares ----------
+
+    /**
+     * Meia-noite de hoje no fuso do limite (Brasília por padrão), convertida para o fuso do
+     * servidor — que é o fuso em que criada_em é gravada (LocalDateTime.now()).
+     */
+    private LocalDateTime inicioDoDia() {
+        return LocalDate.now(fusoDoLimite).atStartOfDay(fusoDoLimite)
+                .withZoneSameInstant(ZoneId.systemDefault())
+                .toLocalDateTime();
+    }
 
     private ConversaModel novaConversa(Long usuarioId, String pergunta) {
         UserModel usuario = userRepository.findById(usuarioId)
