@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import com.aski.IA.dto.CartaoGeradoDTO;
 import com.aski.IA.dto.FlashcardsGeradosDTO;
+import com.aski.IA.dto.PassoDTO;
 import com.aski.IA.dto.QuestaoGeradaDTO;
 import com.aski.IA.dto.QuizGeradoDTO;
 import com.aski.IA.dto.RespostaIaDTO;
@@ -78,6 +79,25 @@ public class IaService {
             throw new IaIndisponivelException("A IA não conseguiu gerar um quiz para essa matéria agora.");
         }
         return resultado.questoes();
+    }
+
+    // ---------- fallback ----------
+
+    /**
+     * Resposta de segurança quando a IA falha de verdade (depois dos retries rápidos
+     * configurados em application.properties) — chamada pelo IaController, nunca por aqui
+     * mesmo. Não inventa conteúdo sobre a pergunta do aluno (poderia passar informação
+     * errada como se fosse da IA); só explica a situação e aponta um caminho alternativo
+     * pra continuar estudando enquanto isso.
+     */
+    public RespostaIaDTO respostaFallback() {
+        PassoDTO passo = new PassoDTO(
+                "IA temporariamente indisponível",
+                "Não consegui falar com o modelo de IA agora — pode ser instabilidade momentânea "
+                        + "do provedor. Tente perguntar de novo em alguns instantes. Enquanto isso, você "
+                        + "pode praticar com o banco de questões em Flashcards ou Quiz, que não depende da IA.",
+                null);
+        return new RespostaIaDTO(null, null, List.of(passo), null);
     }
 
     // ---------- auxiliares ----------

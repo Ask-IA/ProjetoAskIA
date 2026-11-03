@@ -12,6 +12,12 @@
     <span class="modo-usado">Modo {{ nomeModo[resposta().modo] }}</span>
   </div>
 
+  @if (resposta().doFallback) {
+    <p class="aviso-fallback">
+      A IA não respondeu a tempo agora — isto é uma resposta de contingência, não uma explicação real sobre sua pergunta.
+    </p>
+  }
+
   <ol class="passos">
     @for (passo of resposta().passos; track $index; let j = $index) {
       @if (j < mensagem().passosVisiveis) {

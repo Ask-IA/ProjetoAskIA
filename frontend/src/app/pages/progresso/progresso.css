@@ -32,3 +32,27 @@
 
 .trilha { height: 10px; overflow: hidden; border-radius: 999px; background: var(--trilha); }
 .preenchido { height: 100%; border-radius: 999px; background: var(--area); transition: width .5s ease; }
+
+.lista-conquistas { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+
+.conquista {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--linha);
+  border-radius: 12px;
+  background: var(--fundo);
+  /* Trancada por padrão: sem XP mostrado como se já tivesse sido alcançado. */
+  color: var(--texto-suave);
+  opacity: .55;
+}
+.conquista strong { display: block; color: inherit; font-size: .9375rem; }
+.conquista small { font-size: .8125rem; }
+
+.conquista.desbloqueada {
+  opacity: 1;
+  color: var(--texto);
+  border-color: var(--area-forte);
+}
+.conquista.desbloqueada .icone-conquista { color: var(--area-forte); }

@@ -21,6 +21,16 @@
 .topico, .modo-usado { color: var(--texto-suave); font-size: .8125rem; font-weight: 600; }
 .modo-usado { margin-left: auto; font-weight: 500; }
 
+.aviso-fallback {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--linha);
+  border-radius: 10px;
+  background: var(--fundo);
+  color: var(--texto-suave);
+  font-size: .875rem;
+}
+
 .passos { display: flex; flex-direction: column; gap: 14px; }
 .passo { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 12px; border-radius: 8px; }
 .passo:focus-visible { outline-offset: 4px; }

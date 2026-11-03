@@ -58,6 +58,8 @@ export interface RespostaIA {
   passos: PassoResposta[];
   tenteVoce: TenteVoce | null;
   cotaRestante: number;
+  /** true = a IA falhou de verdade e isto é a resposta de segurança do backend, não uma resposta real. */
+  doFallback: boolean;
 }
 
 export interface MensagemAluno {
@@ -135,6 +137,7 @@ interface PerguntarApi {
   conversa: ConversaResumoApi;
   resposta: RespostaIaApi;
   cotaRestante: number;
+  doFallback: boolean;
 }
 
 export const COTA_DIARIA = 10;
@@ -279,13 +282,13 @@ export class AskIaService {
       tap({
         next: api => {
           const idReal = this.confirmarConversa(conversaId, api.conversa);
-          this.registrarResposta(idReal, paraRespostaIA(api.resposta, modo, api.cotaRestante));
+          this.registrarResposta(idReal, paraRespostaIA(api.resposta, modo, api.cotaRestante, api.doFallback));
         },
         error: () => this.removerUltimaPergunta(conversaId),
         unsubscribe: () => this.removerUltimaPergunta(conversaId),
         finalize: () => this.aguardando.set(null),
       }),
-      map(api => paraRespostaIA(api.resposta, modo, api.cotaRestante))
+      map(api => paraRespostaIA(api.resposta, modo, api.cotaRestante, api.doFallback))
     );
   }
 
@@ -470,12 +473,14 @@ function paraMensagem(api: MensagemApi, area: AreaEnem | null): Mensagem {
         ? { pergunta: api.tenteVoce.pergunta ?? '', resposta: api.tenteVoce.resposta ?? '' }
         : null,
       cotaRestante: COTA_DIARIA,
+      // Histórico não guarda se foi fallback — só a resposta ao vivo (abaixo) sabe disso.
+      doFallback: false,
     },
   };
 }
 
 /** Resposta real da IA (POST /api/ia/perguntar) → formato que a tela usa. */
-function paraRespostaIA(api: RespostaIaApi, modo: ModoAjuda, cotaRestante: number): RespostaIA {
+function paraRespostaIA(api: RespostaIaApi, modo: ModoAjuda, cotaRestante: number, doFallback: boolean): RespostaIA {
   const passos: PassoResposta[] = api.passos.map(p => ({
     titulo: p.titulo,
     conteudo: p.conteudo,
@@ -488,6 +493,7 @@ function paraRespostaIA(api: RespostaIaApi, modo: ModoAjuda, cotaRestante: numbe
     passos,
     tenteVoce: api.tenteVoce ? { pergunta: api.tenteVoce.pergunta, resposta: api.tenteVoce.resposta } : null,
     cotaRestante,
+    doFallback,
   };
 }
 

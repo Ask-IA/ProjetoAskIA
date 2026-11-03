@@ -16,6 +16,7 @@ import com.aski.IA.dto.InteracaoResponseDTO;
 import com.aski.IA.dto.PerguntarRequestDTO;
 import com.aski.IA.dto.PerguntarResponseDTO;
 import com.aski.IA.dto.RespostaIaDTO;
+import com.aski.IA.exception.IaIndisponivelException;
 import com.aski.IA.exception.LimiteDiarioExcedidoException;
 import com.aski.IA.model.ModoAjuda;
 import com.aski.IA.service.ConversaService;
@@ -59,12 +60,23 @@ public class IaController {
                     "Limite diário de " + cota.limite() + " perguntas atingido.");
         }
 
-        RespostaIaDTO resposta = iaService.perguntar(dto.pergunta(), modo);
+        // Se a IA falhar de verdade (depois dos retries rápidos já configurados), cai na
+        // resposta de segurança em vez de estourar erro pro aluno — o chat continua
+        // respondendo, só avisando (doFallback) que não foi a IA de verdade dessa vez.
+        RespostaIaDTO resposta;
+        boolean doFallback;
+        try {
+            resposta = iaService.perguntar(dto.pergunta(), modo);
+            doFallback = false;
+        } catch (IaIndisponivelException e) {
+            resposta = iaService.respostaFallback();
+            doFallback = true;
+        }
 
         InteracaoResponseDTO salvo = conversaService.registrarInteracao(usuarioId,
                 new InteracaoRequestDTO(dto.conversaId(), dto.modo(), dto.pergunta(), resposta));
 
-        return new PerguntarResponseDTO(salvo.conversa(), resposta, salvo.cotaRestante());
+        return new PerguntarResponseDTO(salvo.conversa(), resposta, salvo.cotaRestante(), doFallback);
     }
 
     private ModoAjuda converterModo(String valor) {

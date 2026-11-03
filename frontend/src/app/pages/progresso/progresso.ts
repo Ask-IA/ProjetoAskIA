@@ -8,7 +8,7 @@
 // reaproveitava vermelho de erro e verde de acerto). E a área vai escrita.
 
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { DesempenhoMateria, EstudosService } from '../../services/estudos.service';
+import { Conquista, DesempenhoMateria, EstudosService } from '../../services/estudos.service';
 import { AREAS, AreaEnem, NOME_CURTO_AREA, areaDaMateria, classeArea } from '../../core/areas';
 import { duracaoPorExtenso } from '../../core/datas';
 import { Icone } from '../../shared/icone';
@@ -36,6 +36,13 @@ export class Progresso implements OnInit {
   carregando = signal(true);
   erro = signal('');
 
+  // Gamificação (XP, perguntas respondidas, conquistas) — GET /api/gamificacao e
+  // /api/conquistas. Carregada à parte do resto: se falhar, só essa seção some,
+  // o progresso por matéria continua aparecendo normalmente.
+  xp = signal(0);
+  perguntasRespondidas = signal(0);
+  conquistas = signal<Conquista[]>([]);
+
   /** Matérias com a área, ordenadas na ordem da prova (as da mesma cor ficam juntas). */
   readonly linhas = computed<LinhaMateria[]>(() =>
     this.desempenhos()
@@ -54,6 +61,7 @@ export class Progresso implements OnInit {
 
   ngOnInit(): void {
     this.carregar();
+    this.carregarGamificacao();
   }
 
   carregar(): void {
@@ -70,6 +78,20 @@ export class Progresso implements OnInit {
         this.carregando.set(false);
         this.erro.set('Não foi possível carregar seu progresso.');
       },
+    });
+  }
+
+  private carregarGamificacao(): void {
+    this.estudos.gamificacao().subscribe({
+      next: g => {
+        this.xp.set(g.xp);
+        this.perguntasRespondidas.set(g.perguntasRespondidas);
+      },
+      error: () => {}, // silencioso: o cartão de XP só não aparece
+    });
+    this.estudos.conquistas().subscribe({
+      next: c => this.conquistas.set(c),
+      error: () => {}, // silencioso: a seção de conquistas só não aparece
     });
   }
 

@@ -42,7 +42,7 @@ export const routes: Routes = [
     canActivate: [authGuard],
     loadComponent: () => import('./layout/layout').then(m => m.Layout),
     children: [
-      { path: '', redirectTo: 'ask', pathMatch: 'full' },
+      { path: '', redirectTo: 'painel', pathMatch: 'full' },
 
       { path: 'ask',        loadComponent: () => import('./pages/ask-ia/ask-ia').then(m => m.AskIa) },
       { path: 'painel',     loadComponent: () => import('./pages/painel/painel').then(m => m.Painel) },

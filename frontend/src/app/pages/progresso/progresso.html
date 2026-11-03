@@ -27,7 +27,33 @@
         <small>de estudo registrado no total</small>
       </div>
     </div>
+    <div class="cartao-app destaque">
+      <span class="icone-destaque"><app-icone nome="brilho" [tamanho]="24" /></span>
+      <div>
+        <strong>{{ xp() }} XP</strong>
+        <small>{{ perguntasRespondidas() }} {{ perguntasRespondidas() === 1 ? 'pergunta respondida' : 'perguntas respondidas' }} ao Ask IA</small>
+      </div>
+    </div>
   </div>
+
+  @if (conquistas().length > 0) {
+    <section class="cartao-app">
+      <h2 class="titulo-secao">Conquistas</h2>
+      <p class="explica">Desbloqueadas conforme você usa o Ask.IA e mantém a sequência de estudos.</p>
+
+      <ul class="lista-conquistas">
+        @for (c of conquistas(); track c.id) {
+          <li class="conquista" [class.desbloqueada]="c.desbloqueada">
+            <span class="icone-conquista"><app-icone nome="capelo" [tamanho]="20" /></span>
+            <div>
+              <strong>{{ c.nome }}</strong>
+              <small>{{ c.descricao }}</small>
+            </div>
+          </li>
+        }
+      </ul>
+    </section>
+  }
 
   <section class="cartao-app">
     <!-- Antes: "Domínio por matéria". O número é a parte dos tópicos que você
