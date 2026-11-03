@@ -1,3 +1,8 @@
+/* O CSS do KaTeX (renderização das fórmulas em LaTeX que a IA devolve — ver
+ * IaService, FormulaMatematica) é carregado via angular.json "styles", não
+ * por @import aqui: um @import de um módulo do node_modules não é resolvido
+ * pelo build do Angular (ele só segue caminhos relativos). */
+
 /* src/styles.css
  *
  * Padrão visual do Ask.IA (revisto em 24/09/2026).
@@ -148,6 +153,10 @@ html {
   scroll-behavior: smooth;
 }
 
+html, body {
+  height: 100%;
+}
+
 body {
   min-height: 100dvh;
   font-family: "DM Sans", system-ui, sans-serif;
@@ -281,6 +290,8 @@ label[for] {
   box-shadow: var(--sombra);
   padding: 20px;
   color: var(--texto);
+  transition: border-color .15s ease, box-shadow .15s ease;
+  animation: entrar-subindo .35s ease both;
 }
 
 /* Rótulo em caixa alta no topo de um cartão ("OFENSIVA", "HOJE") */
@@ -345,7 +356,8 @@ label[for] {
   font-weight: 600;
   line-height: 1.2;
   text-decoration: none;
-  transition: background-color .2s ease, color .2s ease;
+  transition: background-color .2s ease, color .2s ease, border-color .2s ease,
+              transform .15s ease, box-shadow .2s ease;
 }
 
 .btn-acento {
@@ -356,7 +368,10 @@ label[for] {
 .btn-acento:hover:not(:disabled) {
   background: var(--acento-hover);
   border-color: var(--acento-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px -10px color-mix(in srgb, var(--acento) 60%, transparent);
 }
+.btn-acento:active:not(:disabled) { transform: translateY(0); }
 
 .btn-contorno {
   background: var(--cartao);
@@ -365,7 +380,9 @@ label[for] {
 }
 .btn-contorno:hover:not(:disabled) {
   background: var(--acento-suave);
+  transform: translateY(-1px);
 }
+.btn-contorno:active:not(:disabled) { transform: translateY(0); }
 
 .btn-acento:disabled,
 .btn-contorno:disabled {
@@ -416,6 +433,17 @@ label[for] {
   font-weight: 600;
 }
 
+/* "Esqueci minha senha" como linha própria, abaixo do campo de senha (login) */
+.link-abaixo-campo {
+  align-self: flex-end;
+  margin-top: 6px;
+}
+
+.link-pequeno {
+  font-size: .8125rem;
+  white-space: nowrap;
+}
+
 .campo-app input,
 .campo-app select,
 .campo-app textarea,
@@ -429,6 +457,15 @@ label[for] {
   color: var(--texto);
   font-family: inherit;
   font-size: 1rem;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.campo-app input:focus,
+.campo-app select:focus,
+.campo-app textarea:focus,
+.entrada:focus {
+  border-color: var(--acento);
+  box-shadow: 0 0 0 4px var(--acento-suave);
 }
 
 .campo-app input::placeholder,
@@ -498,6 +535,11 @@ label[for] {
   background: var(--fundo);
 }
 
+@keyframes entrar-subindo {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 .auth-cartao {
   width: 100%;
   max-width: 400px;
@@ -507,6 +549,7 @@ label[for] {
   background: var(--cartao);
   box-shadow: var(--sombra-flutuante);
   color: var(--texto);
+  animation: entrar-subindo .4s ease both;
 }
 
 .auth-marca {

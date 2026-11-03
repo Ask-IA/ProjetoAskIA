@@ -15,4 +15,10 @@ public interface SessaoEstudoRepository extends JpaRepository<SessaoEstudoModel,
     /** Só as datas (sem carregar as sessões inteiras): base da sequência de dias de uso. */
     @Query("select s.data from SessaoEstudoModel s where s.usuario.id = :usuarioId")
     List<LocalDateTime> datasDoUsuario(@Param("usuarioId") Long usuarioId);
+
+    /** Total de sessões de estudo já registradas pelo usuário — usado no cálculo de XP. */
+    long countByUsuarioId(Long usuarioId);
+
+    /** Usado ao apagar uma matéria: suas sessões de estudo vão junto. */
+    void deleteByMateriaId(Long materiaId);
 }

@@ -7,9 +7,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.aski.IA.dto.EsqueciSenhaRequestDTO;
 import com.aski.IA.dto.LoginRequestDTO;
+import com.aski.IA.dto.RedefinirSenhaRequestDTO;
 import com.aski.IA.dto.RegisterRequestDTO;
 import com.aski.IA.dto.UserResponseDTO;
+import com.aski.IA.service.PasswordResetService;
 import com.aski.IA.service.UserService;
 
 import jakarta.servlet.http.HttpSession;
@@ -19,9 +22,11 @@ import jakarta.servlet.http.HttpSession;
 public class AuthController {
 
     private final UserService userService;
+    private final PasswordResetService passwordResetService;
 
-    public AuthController(UserService userService) {
+    public AuthController(UserService userService, PasswordResetService passwordResetService) {
         this.userService = userService;
+        this.passwordResetService = passwordResetService;
     }
 
     @PostMapping("/register")
@@ -43,6 +48,24 @@ public class AuthController {
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(HttpSession session) {
         session.invalidate();
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * "Esqueci minha senha": sempre responde 204, exista ou não o nome/e-mail
+     * informado — assim ninguém descobre por aqui quais contas existem.
+     * Se existir, PasswordResetService manda o e-mail (Resend) por trás.
+     */
+    @PostMapping("/esqueci-senha")
+    public ResponseEntity<Void> esqueciSenha(@RequestBody EsqueciSenhaRequestDTO dto) {
+        passwordResetService.solicitar(dto.identificador());
+        return ResponseEntity.noContent().build();
+    }
+
+    /** Troca a senha a partir do token recebido por e-mail (link de "esqueci minha senha"). */
+    @PostMapping("/redefinir-senha")
+    public ResponseEntity<Void> redefinirSenha(@RequestBody RedefinirSenhaRequestDTO dto) {
+        passwordResetService.redefinir(dto.token(), dto.novaSenha());
         return ResponseEntity.noContent().build();
     }
 

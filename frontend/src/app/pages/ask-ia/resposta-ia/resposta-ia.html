@@ -21,7 +21,7 @@
             <h3>{{ passo.titulo }}</h3>
             <p>@for (trecho of passo.conteudo | trechos; track $index) {@if (trecho.destaque) {<mark class="marca-texto">{{ trecho.texto }}</mark>} @else {<ng-container>{{ trecho.texto }}</ng-container>}}</p>
             @if (passo.formula) {
-              <div class="formula">{{ passo.formula }}</div>
+              <app-formula-matematica [formula]="passo.formula" />
             }
           </div>
         </li>

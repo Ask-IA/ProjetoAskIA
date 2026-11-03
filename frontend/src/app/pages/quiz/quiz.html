@@ -7,25 +7,35 @@
   <p class="msg-erro-app">{{ erro() }}</p>
 }
 
-@if (questoes().length === 0 && !gerando()) {
+@if (questoes().length === 0 && !gerando() && materias().length === 0) {
+  <section class="cartao-app inicio">
+    <p class="detalhe">Cadastre uma matéria antes de gerar um quiz.</p>
+    <a routerLink="/app/materias" class="btn-acento">Ir para Matérias</a>
+  </section>
+} @else if (questoes().length === 0 && !gerando()) {
   <section class="cartao-app inicio">
     <div class="campo-app">
       <label for="quiz-materia">Matéria</label>
       <select id="quiz-materia" name="materia" [ngModel]="materiaEscolhida()" (ngModelChange)="materiaEscolhida.set($event)">
         <option [ngValue]="null" disabled>Selecione uma matéria…</option>
-        @for (materia of materias(); track materia) {
-          <option [ngValue]="materia">{{ materia }}</option>
+        @for (materia of materias(); track materia.id) {
+          <option [ngValue]="materia">{{ materia.nome }}</option>
         }
       </select>
     </div>
-    <button type="button" class="btn-acento" (click)="gerar()" [disabled]="!materiaEscolhida()">
-      Gerar quiz
-    </button>
+    <div class="acoes-inicio">
+      <button type="button" class="btn-contorno" (click)="praticarComBanco()" [disabled]="!materiaEscolhida()">
+        Praticar com banco de questões
+      </button>
+      <button type="button" class="btn-acento" (click)="gerar()" [disabled]="!materiaEscolhida()">
+        Gerar quiz com IA
+      </button>
+    </div>
   </section>
 } @else if (gerando()) {
   <section class="cartao-app gerando" role="status">
     <span class="pontos" aria-hidden="true"><span></span><span></span><span></span></span>
-    <p>A IA está montando seu quiz de <strong>{{ materiaEscolhida() }}</strong>…</p>
+    <p>A IA está montando seu quiz de <strong>{{ materiaEscolhida()?.nome }}</strong>…</p>
   </section>
 } @else if (terminou()) {
   <section class="cartao-app final">
@@ -46,7 +56,10 @@
   </section>
 } @else if (atual(); as questao) {
   <section class="cartao-app questao">
-    <p class="contagem">Questão {{ indice() + 1 }} de {{ questoes().length }} · {{ materiaEscolhida() }}</p>
+    <p class="contagem">
+      Questão {{ indice() + 1 }} de {{ questoes().length }} · {{ materiaEscolhida()?.nome }}
+      · {{ doBanco() ? 'banco de questões' : 'gerado agora pela IA' }}
+    </p>
     <h2 id="enunciado">{{ questao.enunciado }}</h2>
 
     <div class="alternativas" role="group" aria-labelledby="enunciado">

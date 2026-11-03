@@ -114,6 +114,7 @@
             }
           </p>
         </div>
+        <p class="modo-descricao" aria-live="polite">{{ descricaoModo() }}</p>
 
         <div class="compositor-linha">
           <label for="campo-pergunta" class="so-leitor">Sua dúvida</label>
@@ -158,7 +159,7 @@
       }
       <p class="hoje-linha">
         <app-icone nome="flashcards" />
-        <span class="hoje-cresce"><b>{{ cartoesParaRevisar() }} cartões</b> para revisar</span>
+        <span class="hoje-cresce">Revise com <b>flashcards ou quiz</b> gerados pela IA</span>
         <a routerLink="/app/flashcards" class="link-acao">Revisar</a>
       </p>
     </section>

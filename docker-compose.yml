@@ -1,18 +1,25 @@
+# As credenciais e chaves de API vêm do arquivo .env (não versionado — veja
+# .env.example). O Docker Compose lê o .env sozinho, desde que ele esteja
+# nesta mesma pasta.
 services:
   db:
     image: postgres:16-alpine
     container_name: ask-ia-db
     restart: unless-stopped
     environment:
-      POSTGRES_DB: askia_db
-      POSTGRES_USER: askia
-      POSTGRES_PASSWORD: askia123
+      POSTGRES_DB: ${DB_NAME:-askia_db}
+      POSTGRES_USER: ${DB_USER:-askia}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-askia123}
     ports:
       - "5432:5432"
     volumes:
       - askia_db_data:/var/lib/postgresql/data
+      # Scripts SQL rodados pelo PRÓPRIO Postgres na primeira subida (banco
+      # vazio), em ordem alfabética. Não roda de novo em subidas seguintes:
+      # para recriar o schema do zero, apague o volume askia_db_data.
+      - ./db:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U askia -d askia_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-askia} -d ${DB_NAME:-askia_db}"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -25,9 +32,17 @@ services:
     environment:
       DB_HOST: db
       DB_PORT: 5432
-      DB_NAME: askia_db
-      DB_USER: askia
-      DB_PASSWORD: askia123
+      DB_NAME: ${DB_NAME:-askia_db}
+      DB_USER: ${DB_USER:-askia}
+      DB_PASSWORD: ${DB_PASSWORD:-askia123}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:4200}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.8-flash}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      RESEND_FROM_EMAIL: ${RESEND_FROM_EMAIL:-onboarding@resend.dev}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
     ports:
       - "8080:8080"
     depends_on:

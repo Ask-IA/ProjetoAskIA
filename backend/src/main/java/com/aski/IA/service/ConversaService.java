@@ -43,8 +43,9 @@ import com.aski.IA.repository.UserRepository;
  * Regra de ouro: TODA busca passa pelo id do usuário logado. Conversa de outra
  * pessoa responde 404 (igual a "não existe"), como já é feito em Matéria.
  *
- * Quando o endpoint da IA existir (ex.: POST /api/ia/perguntar), ele deve chamar
- * registrarInteracao() logo depois de receber a resposta do modelo.
+ * registrarInteracao() é chamado por IaController, logo depois de receber a
+ * resposta do modelo (IaService) — é o único lugar do sistema que grava uma
+ * "resposta da IA" no histórico.
  */
 @Service
 public class ConversaService {

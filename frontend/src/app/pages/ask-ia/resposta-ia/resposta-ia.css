@@ -43,16 +43,8 @@
    (antes era #6B7280 sobre #E8E8E8 = 3,95:1, abaixo do mínimo) */
 .passo p { margin: 0; line-height: 1.6; overflow-wrap: break-word; }
 
-.formula {
-  margin-top: 8px;
-  padding: 9px 14px;
-  overflow-x: auto;
-  border-radius: var(--raio-pequeno);
-  background: var(--fundo);
-  font-family: 'Cambria Math', 'STIX Two Math', Georgia, serif;
-  font-size: 1.1875rem;
-  font-style: italic;
-}
+/* A fórmula agora é renderizada pelo KaTeX dentro de <app-formula-matematica>
+ * (shared/formula-matematica.css) — esta classe saiu de uso aqui. */
 
 .revelar {
   display: flex;

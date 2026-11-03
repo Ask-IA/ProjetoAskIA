@@ -1,33 +1,45 @@
 // src/app/pages/flashcards/flashcards.ts
 //
-// Revisão por flashcards (ainda com DADOS FALSOS).
-// `cartoes` e `carregando` são signals porque chegam de forma assíncrona —
-// no modo zoneless, só o signal avisa o Angular para redesenhar a tela.
+// Revisão por flashcards, gerados pela IA (OpenAI, via backend) a partir das
+// matérias/tópicos que o aluno já cadastrou em Matérias — igual ao Quiz:
+// escolhe a matéria, pede um lote novo pra IA, revisa cartão por cartão.
 //
-// Mudanças de 24/09: matéria como etiqueta da área (antes era texto azul, e
-// azul é a cor do que é tocável); "Acertei" e "Errei" com ícone e texto; no
-// fim, os cartões errados viram atalho para tirar a dúvida no Ask IA.
+// `cartoes`, `materias` e `gerando` são signals porque chegam de forma
+// assíncrona — no modo zoneless, só o signal avisa o Angular para redesenhar.
+//
+// "Acertei" e "Errei" com ícone e texto; no fim, os cartões errados viram
+// atalho para tirar a dúvida no Ask IA.
 
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { Flashcard, RevisaoService } from '../../services/revisao.service';
+import { EstudosService, Materia } from '../../services/estudos.service';
 import { NOME_AREA, areaDaMateria, classeArea } from '../../core/areas';
 import { Icone } from '../../shared/icone';
 
 @Component({
   selector: 'app-flashcards',
   standalone: true,
-  imports: [RouterLink, Icone],
+  imports: [FormsModule, RouterLink, Icone],
   templateUrl: './flashcards.html',
   styleUrl: './flashcards.css',
   host: { class: 'pagina' },
 })
 export class Flashcards implements OnInit {
   private revisao = inject(RevisaoService);
+  private estudos = inject(EstudosService);
+
+  materias = signal<Materia[]>([]);
+  materiaEscolhida = signal<Materia | null>(null);
+  carregandoMaterias = signal(true);
 
   cartoes = signal<Flashcard[]>([]);
-  carregando = signal(true);
+  gerando = signal(false);
   erro = signal('');
+
+  /** true = este lote veio do banco curado (sem IA), não foi gerado agora. */
+  doBanco = signal(false);
 
   indice = signal(0);
   virado = signal(false);
@@ -44,14 +56,67 @@ export class Flashcards implements OnInit {
   });
 
   ngOnInit(): void {
-    this.revisao.listarFlashcards().subscribe({
-      next: lista => {
-        this.cartoes.set(lista);
-        this.carregando.set(false);
+    this.estudos.listarMaterias().subscribe({
+      next: m => {
+        this.materias.set(m);
+        this.carregandoMaterias.set(false);
       },
       error: () => {
-        this.carregando.set(false);
-        this.erro.set('Não foi possível carregar seus flashcards.');
+        this.carregandoMaterias.set(false);
+        this.erro.set('Não foi possível carregar suas matérias.');
+      },
+    });
+  }
+
+  gerar(): void {
+    const materia = this.materiaEscolhida();
+    if (!materia) return;
+    this.gerando.set(true);
+    this.erro.set('');
+
+    this.revisao.gerarFlashcards(materia.id).subscribe({
+      next: resultado => {
+        this.doBanco.set(resultado.doBanco);
+        this.cartoes.set(resultado.itens);
+        this.gerando.set(false);
+        this.indice.set(0);
+        this.virado.set(false);
+        this.acertos.set(0);
+        this.errados.set([]);
+        this.terminou.set(false);
+      },
+      error: () => {
+        this.gerando.set(false);
+        this.erro.set('Não foi possível gerar flashcards agora — nem pela IA, nem pelo banco. Tente de novo em instantes.');
+      },
+    });
+  }
+
+  /** Puxa flashcards prontos do banco curado pela equipe — não usa IA, não gasta cota. */
+  praticarComBanco(): void {
+    const materia = this.materiaEscolhida();
+    if (!materia) return;
+    this.gerando.set(true);
+    this.erro.set('');
+
+    this.revisao.flashcardsDoBanco(materia.nome).subscribe({
+      next: cartoes => {
+        this.gerando.set(false);
+        if (cartoes.length === 0) {
+          this.erro.set(`Ainda não há banco de flashcards pronto para "${materia.nome}". Tente gerar com a IA.`);
+          return;
+        }
+        this.doBanco.set(true);
+        this.cartoes.set(cartoes);
+        this.indice.set(0);
+        this.virado.set(false);
+        this.acertos.set(0);
+        this.errados.set([]);
+        this.terminou.set(false);
+      },
+      error: () => {
+        this.gerando.set(false);
+        this.erro.set('Não foi possível carregar o banco de flashcards agora.');
       },
     });
   }
@@ -74,11 +139,9 @@ export class Flashcards implements OnInit {
   }
 
   reiniciar(): void {
-    this.indice.set(0);
-    this.virado.set(false);
-    this.acertos.set(0);
-    this.errados.set([]);
+    this.cartoes.set([]);
     this.terminou.set(false);
+    this.materiaEscolhida.set(null);
   }
 
   perguntaSobre(cartao: Flashcard): string {

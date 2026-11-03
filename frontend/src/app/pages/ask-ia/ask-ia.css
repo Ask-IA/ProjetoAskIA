@@ -47,8 +47,9 @@
   color: var(--acento);
   font-size: .9375rem;
   text-align: left;
+  transition: background-color .15s ease, transform .15s ease;
 }
-.exemplo:hover { background: var(--acento-suave); }
+.exemplo:hover { background: var(--acento-suave); transform: translateY(-1px); }
 
 /* Bolha só na pergunta do aluno; a resposta fica no papel, sem caixa dentro de caixa */
 .bolha-aluno {
@@ -97,8 +98,20 @@
   background: var(--cartao);
   font-size: .8125rem;
   font-weight: 600;
+  transition: background-color .15s ease, color .15s ease, border-color .15s ease;
 }
+.modo-botao:hover:not([aria-pressed="true"]) { border-color: var(--acento); color: var(--acento); }
 .modo-botao[aria-pressed="true"] { border-color: var(--acento); background: var(--acento); color: var(--acento-texto); }
+
+/* Explica o modo escolhido — ver DESCRICAO_MODO em ask-ia.ts */
+.modo-descricao {
+  width: 100%;
+  max-width: 680px;
+  margin: -2px auto 0;
+  color: var(--texto-suave);
+  font-size: .78125rem;
+  line-height: 1.3;
+}
 
 /* No celular o contador vem primeiro, acima dos modos */
 .cota {

@@ -66,6 +66,20 @@ export interface Progresso {
   desempenhos: DesempenhoMateria[];
 }
 
+export interface Gamificacao {
+  perguntasRespondidas: number;
+  diasSeguidos: number;
+  usouHoje: boolean;
+  xp: number;
+}
+
+export interface Conquista {
+  id: string;
+  nome: string;
+  descricao: string;
+  desbloqueada: boolean;
+}
+
 @Injectable({ providedIn: 'root' })
 export class EstudosService {
   private http = inject(HttpClient);
@@ -83,6 +97,10 @@ export class EstudosService {
 
   adicionarTopico(materiaId: number, nome: string): Observable<Topico> {
     return this.http.post<Topico>(`${this.api}/materias/${materiaId}/topicos`, { nome });
+  }
+
+  removerMateria(materiaId: number): Observable<void> {
+    return this.http.delete<void>(`${this.api}/materias/${materiaId}`);
   }
 
   alternarTopico(materiaId: number, topicoId: number): Observable<void> {
@@ -131,5 +149,15 @@ export class EstudosService {
 
   ofensiva(): Observable<number> {
     return this.progresso().pipe(map(p => p.ofensiva));
+  }
+
+  // ---------- Gamificação ----------
+
+  gamificacao(): Observable<Gamificacao> {
+    return this.http.get<Gamificacao>(`${this.api}/gamificacao`);
+  }
+
+  conquistas(): Observable<Conquista[]> {
+    return this.http.get<Conquista[]>(`${this.api}/conquistas`);
   }
 }

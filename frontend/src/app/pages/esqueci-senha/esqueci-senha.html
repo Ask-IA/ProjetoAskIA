@@ -1,0 +1,42 @@
+<!-- src/app/pages/esqueci-senha/esqueci-senha.html -->
+
+<div class="auth-pagina">
+  <main class="auth-cartao">
+    <a routerLink="/" class="auth-marca" aria-label="Ask.IA, voltar para o início">
+      <span class="logo-quadro"><app-icone nome="logo" [tamanho]="20" /></span>
+      Ask.IA
+    </a>
+
+    @if (!enviado()) {
+      <h1 class="auth-titulo">Esqueci minha senha</h1>
+      <p class="auth-sub">Informe seu nome ou e-mail de cadastro. Se existir uma conta, mandamos um link para você escolher uma nova senha.</p>
+
+      <form id="esqueci-senha-form" class="auth-form" novalidate [formGroup]="form" (ngSubmit)="onSubmit()">
+        <div class="campo-app">
+          <label for="identificador">Nome ou e-mail</label>
+          <input type="text" id="identificador" formControlName="identificador"
+                 autocomplete="username" autocapitalize="none" required />
+        </div>
+
+        @if (errorMessage()) {
+          <p id="error-message" class="msg-erro-app" role="alert">{{ errorMessage() }}</p>
+        }
+
+        <button type="submit" class="btn-acento" [disabled]="loading()">
+          {{ loading() ? 'Enviando...' : 'Enviar link de redefinição' }}
+        </button>
+      </form>
+    } @else {
+      <h1 class="auth-titulo">Verifique seu e-mail</h1>
+      <p class="auth-sub">
+        Se existir uma conta com esse nome ou e-mail, acabamos de enviar um link para redefinir a senha.
+        Ele vale por 30 minutos.
+      </p>
+    }
+
+    <p class="auth-rodape">
+      Lembrou a senha?
+      <a routerLink="/login" id="login-link" class="link-acao">Voltar para o login</a>
+    </p>
+  </main>
+</div>

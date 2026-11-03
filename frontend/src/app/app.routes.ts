@@ -27,6 +27,14 @@ export const routes: Routes = [
     path: 'cadastro',
     loadComponent: () => import('./pages/cadastro/cadastro').then(m => m.Cadastro),
   },
+  {
+    path: 'esqueci-senha',
+    loadComponent: () => import('./pages/esqueci-senha/esqueci-senha').then(m => m.EsqueciSenha),
+  },
+  {
+    path: 'redefinir-senha',
+    loadComponent: () => import('./pages/redefinir-senha/redefinir-senha').then(m => m.RedefinirSenha),
+  },
 
   // Aplicação: tudo com menu, tudo protegido
   {

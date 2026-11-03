@@ -1,17 +1,19 @@
 // src/app/pages/painel/painel.ts
 //
-// Painel do aluno — dados reais do backend (menos o que ainda é mock:
-// conversas do Ask IA e flashcards).
+// Painel do aluno — tudo aqui vem do backend real (conversas do Ask IA,
+// flashcards/quiz gerados pela IA, gamificação).
 //
 // Redesenho de 24/09:
 // - UM botão principal: "Continuar" a última conversa do Ask IA. Antes eram
 //   quatro botões azuis iguais, e quando tudo é principal nada é principal.
-// - Ofensiva com os últimos 7 dias, cartões para revisar e tempo da semana.
+// - Ofensiva com os últimos 7 dias, tópicos pendentes e tempo da semana.
 // - "Tópicos concluídos por área", nas cores das 4 áreas do ENEM.
 //   O nome é honesto: o número vem dos tópicos marcados como concluídos, não
 //   de acertos. Quando o Quiz guardar resultados (Fase 3), vira "Acertos por área".
 // - "Onde focar agora" em cor neutra, com a ação ao lado. Antes a matéria mais
 //   fraca aparecia em vermelho, a cor de erro do app.
+// - XP e conquistas (GamificacaoService no backend): calculados na hora a
+//   partir do que já está gravado, sem tabela nova.
 //
 // POR QUE SIGNALS: o projeto é zoneless (não existe zone.js). Sem zone.js, o
 // Angular não percebe sozinho que uma variável mudou dentro de um subscribe;
@@ -20,10 +22,9 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
-import { EstudosService, Materia, ResumoPainel } from '../../services/estudos.service';
-import { Flashcard, RevisaoService } from '../../services/revisao.service';
+import { Conquista, EstudosService, Gamificacao, Materia, ResumoPainel } from '../../services/estudos.service';
 import { AskIaService } from '../../services/ask-ia.service';
-import { AREAS, AreaEnem, NOME_AREA, NOME_CURTO_AREA, areaDaMateria, classeArea } from '../../core/areas';
+import { AREAS, AreaEnem, NOME_AREA, areaDaMateria, classeArea } from '../../core/areas';
 import { descreverQuando, duracaoPorExtenso, hojePorExtenso } from '../../core/datas';
 import { Icone } from '../../shared/icone';
 import { ContaAcoes } from '../../layout/conta-acoes/conta-acoes';
@@ -43,7 +44,6 @@ const NOME_DO_DIA = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta'
 })
 export class Painel implements OnInit {
   private estudos = inject(EstudosService);
-  private revisao = inject(RevisaoService);
   private auth = inject(AuthService);
   private askIa = inject(AskIaService);
 
@@ -54,7 +54,8 @@ export class Painel implements OnInit {
   resumo = signal<ResumoPainel | null>(null);
   materias = signal<Materia[] | null>(null);
   ofensiva = signal<number | null>(null);
-  cartoes = signal<Flashcard[]>([]);
+  gamificacao = signal<Gamificacao | null>(null);
+  conquistas = signal<Conquista[]>([]);
   erro = signal('');
 
   /** Só o primeiro nome, para caber na saudação. */
@@ -86,18 +87,12 @@ export class Painel implements OnInit {
 
   readonly tempoSemana = computed(() => duracaoPorExtenso(this.resumo()?.minutosSemana ?? 0));
 
-  readonly cartoesPorArea = computed(() => {
-    const contagem = new Map<string, number>();
-    for (const cartao of this.cartoes()) {
-      const area = areaDaMateria(cartao.materia);
-      const nome = area ? NOME_CURTO_AREA[area] : cartao.materia;
-      contagem.set(nome, (contagem.get(nome) ?? 0) + 1);
-    }
-    return [...contagem.entries()]
-      .sort((a, b) => b[1] - a[1])
-      .map(([nome, total]) => `${total} de ${nome}`)
-      .join(' · ');
-  });
+  /** Tópicos marcados em Matérias que ainda faltam — é o que dá pra transformar em flashcards/quiz. */
+  readonly topicosPendentes = computed(() =>
+    this.suasMaterias().reduce((soma, m) => soma + (m.total - m.feitos), 0)
+  );
+
+  readonly conquistasDesbloqueadas = computed(() => this.conquistas().filter(c => c.desbloqueada).length);
 
   /** Ordenadas pela área (na ordem da prova): matérias da mesma cor ficam juntas. */
   readonly suasMaterias = computed(() =>
@@ -157,7 +152,9 @@ export class Painel implements OnInit {
     this.estudos.listarMaterias().subscribe({ next: m => this.materias.set(m), error: falhou });
     // a ofensiva é um extra: se falhar, o cartão só mostra um traço
     this.estudos.ofensiva().subscribe({ next: dias => this.ofensiva.set(dias), error: () => this.ofensiva.set(null) });
-    this.revisao.listarFlashcards().subscribe(lista => this.cartoes.set(lista));
+    // XP e conquistas são extras: se falharem, as seções simplesmente não aparecem
+    this.estudos.gamificacao().subscribe({ next: g => this.gamificacao.set(g), error: () => this.gamificacao.set(null) });
+    this.estudos.conquistas().subscribe({ next: c => this.conquistas.set(c), error: () => this.conquistas.set([]) });
     // "Continuar: última conversa" vem do histórico real
     this.askIa.carregarConversas();
   }

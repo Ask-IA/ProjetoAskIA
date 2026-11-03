@@ -11,4 +11,7 @@ public interface MetaEstudoRepository extends JpaRepository<MetaEstudoModel, Lon
     List<MetaEstudoModel> findByUsuarioIdOrderByIdAsc(Long usuarioId);
 
     Optional<MetaEstudoModel> findByIdAndUsuarioId(Long id, Long usuarioId);
+
+    /** Usado ao apagar uma matéria: suas metas no cronograma vão junto. */
+    void deleteByMateriaId(Long materiaId);
 }

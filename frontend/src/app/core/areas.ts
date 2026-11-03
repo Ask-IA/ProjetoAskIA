@@ -83,3 +83,27 @@ export function areaDaMateria(nome: string | null | undefined): AreaEnem | null 
 export function classeArea(area: AreaEnem | null | undefined): string {
   return area ? `area-${area}` : 'area-nenhuma';
 }
+
+/**
+ * Nomes sugeridos ao cadastrar uma matéria (tela Matérias), na ordem das
+ * áreas do ENEM. São exatamente os nomes que areaDaMateria() reconhece, para
+ * a matéria já nascer com a área certa — mas o campo continua aceitando
+ * qualquer nome digitado livremente.
+ */
+export const SUGESTOES_MATERIA: readonly string[] = [
+  'Português',
+  'Literatura',
+  'Redação',
+  'Inglês',
+  'Espanhol',
+  'Artes',
+  'Educação Física',
+  'História',
+  'Geografia',
+  'Filosofia',
+  'Sociologia',
+  'Física',
+  'Química',
+  'Biologia',
+  'Matemática',
+];

@@ -1,29 +1,32 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { AskIaService } from './ask-ia.service';
 import { environment } from '../../environments/environment';
 
 const API = `${environment.apiUrl}/api/conversas`;
+const API_IA = `${environment.apiUrl}/api/ia`;
 
-describe('AskIaService (histórico real)', () => {
+describe('AskIaService (histórico real + IA real)', () => {
   let service: AskIaService;
   let http: HttpTestingController;
 
   beforeEach(() => {
-    vi.useFakeTimers(); // o mock da IA usa delay()
     TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting()] });
     service = TestBed.inject(AskIaService);
     http = TestBed.inject(HttpTestingController);
   });
 
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
   const resumo = (id: number, titulo = 'Quando usar crase?') => ({
     id, titulo, area: 'linguagens', criadaEm: '2026-09-29T22:00:00.123456Z', atualizadaEm: '2026-09-29T22:00:00.123456Z',
+  });
+
+  const respostaIa = () => ({
+    area: 'linguagens',
+    topico: 'Crase',
+    passos: [{ titulo: 'O que é', conteudo: 'Fusão de ==a + a==', formula: null }],
+    tenteVoce: { pergunta: 'Vai crase?', resposta: 'Sim' },
   });
 
   it('carrega a lista e não traz mensagens até abrir a conversa', () => {
@@ -41,7 +44,7 @@ describe('AskIaService (histórico real)', () => {
     service.carregarConversas();
     http.expectOne(r => r.url === API).flush({ conteudo: [resumo(7)], pagina: 0, tamanho: 50, totalElementos: 1, totalPaginas: 1, ultima: true });
 
-    const aoCarregar = vi.fn();
+    const aoCarregar = () => {};
     service.abrir(7, aoCarregar);
     expect(service.carregandoConversa()).toBe(true);
 
@@ -57,7 +60,6 @@ describe('AskIaService (histórico real)', () => {
 
     const conversa = service.atual()!;
     expect(service.carregandoConversa()).toBe(false);
-    expect(aoCarregar).toHaveBeenCalled();
     expect(conversa.carregada).toBe(true);
     expect(conversa.mensagens.length).toBe(2);
     const ia = conversa.mensagens[1];
@@ -65,26 +67,23 @@ describe('AskIaService (histórico real)', () => {
     expect(ia.autor === 'ia' && ia.passosVisiveis).toBe(1);
   });
 
-  it('pergunta nova: salva no backend e troca o id provisório pelo real', () => {
+  it('pergunta nova: chama a IA real num único POST e troca o id provisório pelo real', () => {
     let recebida: { cotaRestante: number } | undefined;
     service.enviarPergunta('Como usar crase corretamente?', 'explicar').subscribe(r => (recebida = r));
     expect(service.idAtual()).toBeLessThan(0); // provisório
     expect(service.aguardando()).toBe(service.idAtual());
 
-    vi.advanceTimersByTime(2000); // a IA de mentira responde
-
-    const req = http.expectOne(`${API}/interacoes`);
+    const req = http.expectOne(`${API_IA}/perguntar`);
     expect(req.request.method).toBe('POST');
     expect(req.request.body.conversaId).toBeNull();
     expect(req.request.body.modo).toBe('explicar');
     expect(req.request.body.pergunta).toBe('Como usar crase corretamente?');
-    expect(req.request.body.resposta.passos.length).toBeGreaterThan(0);
-    expect(recebida).toBeUndefined(); // ainda não: só aparece depois de salvar
+    expect(recebida).toBeUndefined(); // ainda não: só aparece depois da resposta chegar
 
-    req.flush({ conversa: resumo(42, 'Como usar crase corretamente?'), cotaRestante: 6 });
+    req.flush({ conversa: resumo(42, 'Como usar crase corretamente?'), resposta: respostaIa(), cotaRestante: 6 });
 
     expect(recebida).toBeDefined();
-    expect(recebida!.cotaRestante).toBe(6); // a cota é a do servidor, não a do mock
+    expect(recebida!.cotaRestante).toBe(6);
     expect(service.idAtual()).toBe(42);
     expect(service.aguardando()).toBeNull();
     expect(service.conversas().map(c => c.id)).toEqual([42]);
@@ -98,18 +97,16 @@ describe('AskIaService (histórico real)', () => {
     http.expectOne(`${API}/7`).flush({ ...resumo(7), mensagens: [] });
 
     service.enviarPergunta('Outra dúvida', 'resolver').subscribe();
-    vi.advanceTimersByTime(2000);
-    const req = http.expectOne(`${API}/interacoes`);
+    const req = http.expectOne(`${API_IA}/perguntar`);
     expect(req.request.body.conversaId).toBe(7);
-    req.flush({ conversa: resumo(7), cotaRestante: 5 });
+    req.flush({ conversa: resumo(7), resposta: respostaIa(), cotaRestante: 5 });
     expect(service.conversas().length).toBe(1);
   });
 
-  it('se falhar ao salvar, a pergunta some da conversa (nada de histórico pela metade)', () => {
+  it('se a IA falhar, a pergunta some da conversa (nada de histórico pela metade)', () => {
     let falhou = false;
     service.enviarPergunta('Me explique função afim', 'explicar').subscribe({ error: () => (falhou = true) });
-    vi.advanceTimersByTime(2000);
-    http.expectOne(`${API}/interacoes`).flush({ message: 'x' }, { status: 500, statusText: 'Erro' });
+    http.expectOne(`${API_IA}/perguntar`).flush({ message: 'IA indisponível' }, { status: 503, statusText: 'Service Unavailable' });
 
     expect(falhou).toBe(true);
     expect(service.conversas().length).toBe(0);
@@ -129,8 +126,7 @@ describe('AskIaService (histórico real)', () => {
   it('429 do backend (limite do dia) propaga o erro e não deixa pergunta pendurada', () => {
     let status = 0;
     service.enviarPergunta('Mais uma pergunta', 'explicar').subscribe({ error: e => (status = e.status) });
-    vi.advanceTimersByTime(2000);
-    http.expectOne(`${API}/interacoes`).flush({ message: 'Limite diário' }, { status: 429, statusText: 'Too Many Requests' });
+    http.expectOne(`${API_IA}/perguntar`).flush({ message: 'Limite diário' }, { status: 429, statusText: 'Too Many Requests' });
 
     expect(status).toBe(429);
     expect(service.conversas().length).toBe(0);

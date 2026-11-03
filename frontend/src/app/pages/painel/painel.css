@@ -36,13 +36,13 @@
 /* Ofensiva: dia estudado = bolinha cheia; sem estudo = tracejada; hoje = anel */
 .dias { display: flex; gap: 8px; }
 .dias li { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--texto-suave); font-size: .75rem; }
-.dias .bolinha { width: 22px; height: 22px; border: 1.5px dashed var(--borda-campo); border-radius: 50%; }
+.dias .bolinha { width: 22px; height: 22px; border: 1.5px dashed var(--borda-campo); border-radius: 50%; transition: background-color .2s ease, border-color .2s ease; }
 .dias .estudou .bolinha { border: 0; background: var(--texto-suave); }
 .dias .hoje { color: var(--texto); font-weight: 700; }
 .dias .hoje .bolinha { box-shadow: 0 0 0 2px var(--cartao), 0 0 0 4px var(--texto-suave); }
 
 .barrinhas { display: flex; align-items: flex-end; gap: 6px; height: 44px; }
-.barrinhas span { flex: 1; min-height: 3px; border-radius: 4px 4px 0 0; background: var(--texto-suave); }
+.barrinhas span { flex: 1; min-height: 3px; border-radius: 4px 4px 0 0; background: var(--texto-suave); transition: height .5s ease; }
 .barrinhas .vazia { background: var(--trilha); }
 
 .cabecalho-secao {
@@ -53,6 +53,22 @@
   gap: 4px 12px;
   margin-bottom: 14px;
 }
+
+/* Conquistas: desbloqueada em destaque, bloqueada em tom neutro (sem depender só da cor) */
+.lista-conquistas { display: flex; flex-direction: column; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.lista-conquistas li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 0;
+  border-top: 1px solid var(--linha);
+  color: var(--texto-suave);
+}
+.lista-conquistas li:first-child { border-top: 0; }
+.lista-conquistas li.desbloqueada { color: var(--texto); }
+.lista-conquistas li div { display: flex; flex-direction: column; gap: 2px; }
+.lista-conquistas b { font-size: .9rem; }
+.lista-conquistas small { color: var(--texto-suave); }
 
 /* Barras por área: nome escrito + barra na cor da área + número */
 .linha-area {
@@ -66,7 +82,7 @@
 }
 .nome-area { grid-area: nome; display: flex; align-items: center; gap: 8px; }
 .trilha { grid-area: trilha; display: flex; height: 12px; overflow: hidden; border-radius: 6px; background: var(--trilha); }
-.preenchido { border-radius: 6px; background: var(--area); }
+.preenchido { border-radius: 6px; background: var(--area); transition: width .6s ease; }
 .valor { grid-area: valor; display: inline-flex; align-items: baseline; justify-content: flex-end; gap: 6px; white-space: nowrap; }
 .valor small, .grade-materias small { color: var(--texto-suave); font-size: .8125rem; }
 

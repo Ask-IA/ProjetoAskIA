@@ -26,7 +26,6 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { AskIaService, COTA_DIARIA, ModoAjuda, NOME_MODO } from '../../services/ask-ia.service';
 import { EstudosService } from '../../services/estudos.service';
-import { RevisaoService } from '../../services/revisao.service';
 import { Icone } from '../../shared/icone';
 import { LimiteDiario } from './limite-diario';
 import { ListaConversas } from './lista-conversas/lista-conversas';
@@ -45,6 +44,15 @@ const TEXTO_DE_ESPERA: Record<ModoAjuda, string> = {
   plano: 'Montando o seu plano de estudo…',
 };
 
+// Ninguém adivinha a diferença entre os 3 modos só pelo nome — e errar o modo
+// aqui custa uma das perguntas do dia (cota limitada). Por isso a descrição
+// fica sempre visível, não só num tooltip.
+const DESCRICAO_MODO: Record<ModoAjuda, string> = {
+  explicar: 'Explica o conceito do zero, com um exemplo.',
+  resolver: 'Resolve o que você colar, um passo de cada vez.',
+  plano: 'Monta um plano de estudo de alguns dias para o assunto.',
+};
+
 @Component({
   selector: 'app-ask-ia',
   standalone: true,
@@ -55,7 +63,6 @@ const TEXTO_DE_ESPERA: Record<ModoAjuda, string> = {
 export class AskIa implements OnInit, OnDestroy {
   private service = inject(AskIaService);
   private estudos = inject(EstudosService);
-  private revisao = inject(RevisaoService);
   private rota = inject(ActivatedRoute);
   private router = inject(Router);
   private injector = inject(Injector);
@@ -87,7 +94,6 @@ export class AskIa implements OnInit, OnDestroy {
 
   // Bloco "Hoje", no canto direito
   ofensiva = signal<number | null>(null);
-  cartoesParaRevisar = signal(0);
 
   readonly conversa = this.service.atual;
   readonly carregandoConversa = this.service.carregandoConversa;
@@ -104,6 +110,7 @@ export class AskIa implements OnInit, OnDestroy {
   });
   readonly cotaBaixa = computed(() => (this.cotaRestante() ?? COTA_DIARIA) <= 2);
   readonly dicaDoCampo = computed(() => DICA_DO_CAMPO[this.modo()]);
+  readonly descricaoModo = computed(() => DESCRICAO_MODO[this.modo()]);
   readonly textoDeEspera = computed(() => TEXTO_DE_ESPERA[this.modo()]);
 
   private pedido?: Subscription;
@@ -144,8 +151,6 @@ export class AskIa implements OnInit, OnDestroy {
       next: dias => this.ofensiva.set(dias),
       error: () => this.ofensiva.set(null), // sem backend: o bloco só não mostra a linha
     });
-    this.revisao.listarFlashcards().subscribe(cartoes => this.cartoesParaRevisar.set(cartoes.length));
-
     afterNextRender(() => {
       this.rolarParaFim('auto');
       // Foco automático só com mouse: no celular, o teclado subiria e

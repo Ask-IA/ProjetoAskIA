@@ -13,8 +13,13 @@
   <div class="coluna-lista">
     <form class="form-linha" (ngSubmit)="adicionarMateria()">
       <label for="nova-materia" class="so-leitor">Nova matéria</label>
-      <input id="nova-materia" name="novaMateria" class="entrada" placeholder="Nova matéria"
+      <input id="nova-materia" name="novaMateria" class="entrada" placeholder="Nova matéria" list="sugestoes-materia"
              [ngModel]="novaMateria()" (ngModelChange)="novaMateria.set($event)" />
+      <datalist id="sugestoes-materia">
+        @for (sugestao of sugestoesMateria; track sugestao) {
+          <option [value]="sugestao"></option>
+        }
+      </datalist>
       <button type="submit" class="btn-contorno" [disabled]="!novaMateria().trim()">Adicionar</button>
     </form>
 
@@ -23,16 +28,22 @@
     }
 
     @for (materia of materias(); track materia.id) {
-      <button type="button" class="item-materia" [class]="classeArea(area(materia))"
-              [class.selecionada]="materia.id === selecionada()?.id"
-              [attr.aria-pressed]="materia.id === selecionada()?.id"
-              (click)="selecionar(materia)">
-        <span class="ponto-area"></span>
-        <span class="info">
-          <strong>{{ materia.nome }}</strong>
-          <small>{{ nomeArea(materia) }} · {{ materia.topicos.length }} {{ materia.topicos.length === 1 ? 'tópico' : 'tópicos' }}</small>
-        </span>
-      </button>
+      <div class="item-materia" [class]="classeArea(area(materia))"
+           [class.selecionada]="materia.id === selecionada()?.id">
+        <button type="button" class="item-materia-selecionar"
+                [attr.aria-pressed]="materia.id === selecionada()?.id"
+                (click)="selecionar(materia)">
+          <span class="ponto-area"></span>
+          <span class="info">
+            <strong>{{ materia.nome }}</strong>
+            <small>{{ nomeArea(materia) }} · {{ materia.topicos.length }} {{ materia.topicos.length === 1 ? 'tópico' : 'tópicos' }}</small>
+          </span>
+        </button>
+        <button type="button" class="btn-icone" (click)="removerMateria(materia)"
+                [attr.aria-label]="'Remover a matéria ' + materia.nome" title="Remover matéria">
+          <app-icone nome="lixeira" [tamanho]="18" />
+        </button>
+      </div>
     }
   </div>
 
@@ -77,7 +88,7 @@
         @if (materiaDoTemporizador(); as emFoco) {
           <p class="aviso">Estudando: {{ emFoco.nome }}</p>
         }
-        <div class="mostrador" role="timer" aria-live="off">{{ tempoFormatado() }}</div>
+        <div class="mostrador" [class.rodando]="rodando()" role="timer" aria-live="off">{{ tempoFormatado() }}</div>
 
         @if (terminou() && materiaDoTemporizador(); as emFoco) {
           <div class="terminou" role="status">

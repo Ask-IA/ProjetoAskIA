@@ -1,0 +1,76 @@
+<!-- src/app/pages/redefinir-senha/redefinir-senha.html -->
+
+<div class="auth-pagina">
+  <main class="auth-cartao">
+    <a routerLink="/" class="auth-marca" aria-label="Ask.IA, voltar para o início">
+      <span class="logo-quadro"><app-icone nome="logo" [tamanho]="20" /></span>
+      Ask.IA
+    </a>
+
+    @if (!linkValido()) {
+      <h1 class="auth-titulo">Link inválido</h1>
+      <p class="auth-sub">Esse link de redefinição está incompleto ou já foi usado. Peça um novo.</p>
+      <a routerLink="/esqueci-senha" class="btn-acento" style="display:inline-block; text-align:center; text-decoration:none;">
+        Pedir novo link
+      </a>
+    } @else if (concluido()) {
+      <h1 class="auth-titulo">Senha redefinida</h1>
+      <p class="auth-sub">Sua senha foi alterada. Já dá para entrar com a nova senha.</p>
+      <button type="button" class="btn-acento" (click)="irParaLogin()">Ir para o login</button>
+    } @else {
+      <h1 class="auth-titulo">Escolher nova senha</h1>
+      <p class="auth-sub">Defina a nova senha da sua conta.</p>
+
+      <form id="redefinir-senha-form" class="auth-form" novalidate [formGroup]="form" (ngSubmit)="onSubmit()">
+        <div class="campo-app">
+          <label for="password">Nova senha</label>
+          <div class="campo-senha">
+            <input [type]="mostrarSenha() ? 'text' : 'password'" id="password" formControlName="password"
+                   autocomplete="new-password" required aria-describedby="dica-senha" />
+            <button type="button" class="olhinho" (click)="mostrarSenha.set(!mostrarSenha())"
+                    [attr.aria-label]="mostrarSenha() ? 'Ocultar senha' : 'Mostrar senha'"
+                    [attr.aria-pressed]="mostrarSenha()">
+              <app-icone [nome]="mostrarSenha() ? 'olho-riscado' : 'olho'" [tamanho]="18" />
+            </button>
+          </div>
+          @if (tamanhoSenha > 0) {
+            <p id="dica-senha" class="dica-senha" [class.invalida]="faltamNaSenha > 0" [class.valida]="faltamNaSenha === 0" aria-live="polite">
+              @if (faltamNaSenha > 0) {
+                Faltam {{ faltamNaSenha }} {{ faltamNaSenha === 1 ? 'caractere' : 'caracteres' }} (mínimo de {{ tamanhoMinimo }}).
+              } @else {
+                Tamanho ok ({{ tamanhoSenha }} caracteres).
+              }
+            </p>
+          } @else {
+            <p id="dica-senha" class="dica-senha">Mínimo de {{ tamanhoMinimo }} caracteres.</p>
+          }
+        </div>
+
+        <div class="campo-app">
+          <label for="confirm-password">Confirme a nova senha</label>
+          <div class="campo-senha">
+            <input [type]="mostrarConfirmacao() ? 'text' : 'password'" id="confirm-password" formControlName="confirmPassword"
+                   autocomplete="new-password" required />
+            <button type="button" class="olhinho" (click)="mostrarConfirmacao.set(!mostrarConfirmacao())"
+                    [attr.aria-label]="mostrarConfirmacao() ? 'Ocultar senha' : 'Mostrar senha'"
+                    [attr.aria-pressed]="mostrarConfirmacao()">
+              <app-icone [nome]="mostrarConfirmacao() ? 'olho-riscado' : 'olho'" [tamanho]="18" />
+            </button>
+          </div>
+        </div>
+
+        @if (errorMessage()) {
+          <p id="error-message" class="msg-erro-app" role="alert">{{ errorMessage() }}</p>
+        }
+
+        <button type="submit" class="btn-acento" [disabled]="loading()">
+          {{ loading() ? 'Salvando...' : 'Salvar nova senha' }}
+        </button>
+      </form>
+    }
+
+    <p class="auth-rodape">
+      <a routerLink="/login" id="login-link" class="link-acao">Voltar para o login</a>
+    </p>
+  </main>
+</div>

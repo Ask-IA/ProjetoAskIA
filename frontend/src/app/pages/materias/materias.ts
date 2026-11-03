@@ -14,7 +14,7 @@
 import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { EstudosService, Materia, Topico } from '../../services/estudos.service';
-import { AreaEnem, NOME_AREA, areaDaMateria, classeArea } from '../../core/areas';
+import { AreaEnem, NOME_AREA, SUGESTOES_MATERIA, areaDaMateria, classeArea } from '../../core/areas';
 import { Icone } from '../../shared/icone';
 
 interface RemocaoPendente {
@@ -34,6 +34,7 @@ export class Materias implements OnInit, OnDestroy {
   private estudos = inject(EstudosService);
 
   readonly classeArea = classeArea;
+  readonly sugestoesMateria = SUGESTOES_MATERIA;
 
   materias = signal<Materia[]>([]);
   selecionada = signal<Materia | null>(null);
@@ -120,6 +121,21 @@ export class Materias implements OnInit, OnDestroy {
         this.carregar(true);
       },
       error: () => this.erro.set('Não foi possível cadastrar a matéria.'),
+    });
+  }
+
+  removerMateria(materia: Materia): void {
+    const confirmou = confirm(
+      `Remover "${materia.nome}"? Isso apaga todos os tópicos, sessões de estudo e metas do cronograma dessa matéria. Não dá para desfazer.`
+    );
+    if (!confirmou) return;
+
+    this.estudos.removerMateria(materia.id).subscribe({
+      next: () => {
+        if (this.selecionada()?.id === materia.id) this.selecionada.set(null);
+        this.carregar(true);
+      },
+      error: () => this.erro.set('Não foi possível remover a matéria.'),
     });
   }
 

@@ -64,4 +64,11 @@ public class MateriaController {
                               @PathVariable Long topicoId) {
         materiaService.removerTopico(usuarioId, materiaId, topicoId);
     }
+
+    @DeleteMapping("/{materiaId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void remover(@SessionAttribute("userId") Long usuarioId,
+                        @PathVariable Long materiaId) {
+        materiaService.removerMateria(usuarioId, materiaId);
+    }
 }

@@ -90,9 +90,22 @@ export class Cadastro {
 
     this.authService.register({ email, name, password }).subscribe({
       next: () => {
-        this.loading.set(false);
-        // cadastro deu certo -> manda pro login
-        this.router.navigateByUrl('/login');
+        // /register só cria a conta, não abre sessão — por isso logamos em
+        // seguida com as mesmas credenciais. Resultado: quem acabou de criar
+        // a conta cai direto no app, sem ter que digitar tudo de novo no login.
+        this.authService.login({ login: email, password }).subscribe({
+          next: () => {
+            this.loading.set(false);
+            this.router.navigateByUrl('/app');
+          },
+          error: () => {
+            // Conta criada com sucesso; só o login automático falhou (ex.: rede
+            // caiu nesse meio-tempo). Manda pro login normal, já com o e-mail
+            // preenchido, em vez de fazer a pessoa repetir o cadastro.
+            this.loading.set(false);
+            this.router.navigate(['/login'], { queryParams: { email } });
+          },
+        });
       },
       error: (err) => {
         this.loading.set(false);

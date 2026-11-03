@@ -14,6 +14,13 @@ RUN mvn clean package -DskipTests -B
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
+# Sem isso o processo roda como root dentro do container (padrão da imagem
+# base) — desnecessário aqui, já que a aplicação só escuta uma porta >1024
+# e não precisa de nenhum privilégio de sistema. Scanners de segurança
+# (Trivy, Snyk etc.) sinalizam container rodando como root por padrão.
+RUN addgroup -S askia && adduser -S askia -G askia
+USER askia
+
 COPY --from=build /app/target/*.jar app.jar
 
 EXPOSE 8080

@@ -23,10 +23,14 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: 4px 0;
+  padding: 4px 8px;
+  margin: 0 -8px;
   border-top: 1px solid var(--linha);
+  border-radius: 8px;
   font-size: .9375rem;
+  transition: background-color .15s ease;
 }
+.meta:hover { background: var(--fundo); }
 .sessao { padding: 10px 0; }
 .meta-texto { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .meta em { color: var(--texto-suave); font-style: normal; }

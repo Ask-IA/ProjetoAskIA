@@ -1,5 +1,5 @@
-import { Component, signal } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { Component, OnInit, signal } from '@angular/core';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
 import { Icone } from '../../shared/icone';
@@ -11,7 +11,7 @@ import { HttpErrorResponse } from '@angular/common/http';
   templateUrl: './login.html',
   styleUrl: './login.css',
 })
-export class Login {
+export class Login implements OnInit {
   form: FormGroup;
 
   // signals: a resposta do backend chega de forma assíncrona e, no modo
@@ -23,13 +23,22 @@ export class Login {
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private rota: ActivatedRoute
   ) {
     this.form = this.fb.group({
       // e-mail OU nome: por isso não tem Validators.email
       login: ['', [Validators.required]],
       password: ['', Validators.required],
     });
+  }
+
+  ngOnInit(): void {
+    // Vem do cadastro quando a conta foi criada mas o login automático
+    // falhou (ex.: rede caiu nesse meio-tempo) — poupa a pessoa de digitar
+    // o e-mail de novo logo depois de ter acabado de criá-lo.
+    const email = this.rota.snapshot.queryParamMap.get('email');
+    if (email) this.form.patchValue({ login: email });
   }
 
   onSubmit(): void {

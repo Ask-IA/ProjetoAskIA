@@ -1,0 +1,9 @@
+/* src/app/app.css
+   Sem isso, <app-root> é um elemento HTML desconhecido e o navegador o
+   trata como display:inline por padrão — o suficiente para, em layouts
+   que dependem de esticar até a altura da página, a altura não se
+   propagar direito. */
+:host {
+  display: block;
+  min-height: 100dvh;
+}

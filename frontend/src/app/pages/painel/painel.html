@@ -55,11 +55,9 @@
     </section>
 
     <section class="cartao-app resumo">
-      <h2 class="rotulo-secao"><app-icone nome="flashcards" [tamanho]="18" /> Revisar hoje</h2>
-      <p class="numero-grande">{{ cartoes().length }} {{ cartoes().length === 1 ? 'cartão' : 'cartões' }}</p>
-      @if (cartoesPorArea()) {
-        <p class="detalhe">{{ cartoesPorArea() }}</p>
-      }
+      <h2 class="rotulo-secao"><app-icone nome="flashcards" [tamanho]="18" /> Revisar com a IA</h2>
+      <p class="numero-grande">{{ topicosPendentes() }} {{ topicosPendentes() === 1 ? 'tópico pendente' : 'tópicos pendentes' }}</p>
+      <p class="detalhe">gere flashcards ou um quiz sobre eles</p>
       <a routerLink="/app/flashcards" class="link-acao embaixo">Revisar agora</a>
     </section>
 
@@ -115,6 +113,34 @@
       }
     </section>
   </div>
+
+  @if (gamificacao(); as g) {
+    <div class="linha-meio">
+      <section class="cartao-app resumo">
+        <h2 class="rotulo-secao"><app-icone nome="brilho" [tamanho]="18" /> XP</h2>
+        <p class="numero-grande">{{ g.xp }} XP</p>
+        <p class="detalhe">{{ g.perguntasRespondidas }} {{ g.perguntasRespondidas === 1 ? 'pergunta respondida' : 'perguntas respondidas' }} no Ask IA</p>
+      </section>
+
+      <section class="cartao-app">
+        <div class="cabecalho-secao">
+          <h2 class="titulo-secao">Conquistas</h2>
+          <span class="detalhe">{{ conquistasDesbloqueadas() }} de {{ conquistas().length }}</span>
+        </div>
+        <ul class="lista-conquistas">
+          @for (c of conquistas(); track c.id) {
+            <li [class.desbloqueada]="c.desbloqueada">
+              <app-icone [nome]="c.desbloqueada ? 'capelo' : 'olho-riscado'" [tamanho]="18" />
+              <div>
+                <b>{{ c.nome }}</b>
+                <small>{{ c.descricao }}</small>
+              </div>
+            </li>
+          }
+        </ul>
+      </section>
+    </div>
+  }
 
   <section class="cartao-app">
     <div class="cabecalho-secao">

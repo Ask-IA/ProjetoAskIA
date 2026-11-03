@@ -23,7 +23,12 @@ import { environment } from '../../environments/environment';
 
 export const credenciaisInterceptor: HttpInterceptorFn = (req, next) => {
   const router = inject(Router);
-  const paraApi = req.url.startsWith(environment.apiUrl);
+  // Em produção, environment.apiUrl é '' (URLs relativas — ver nginx.conf): nesse
+  // caso, "é chamada da API" significa começar com /api ou /auth, não "começar
+  // com string vazia" (que combinaria com qualquer URL, inclusive de terceiros).
+  const paraApi = environment.apiUrl
+    ? req.url.startsWith(environment.apiUrl)
+    : req.url.startsWith('/api') || req.url.startsWith('/auth');
 
   if (paraApi) {
     req = req.clone({ withCredentials: true });

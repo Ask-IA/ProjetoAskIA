@@ -1,12 +1,42 @@
 <!-- src/app/pages/flashcards/flashcards.html -->
 
 <h1 class="pagina-titulo">Flashcards</h1>
-<p class="pagina-sub">Tente lembrar a resposta antes de virar o cartão. Depois, diga se acertou.</p>
+<p class="pagina-sub">Escolha uma matéria, tente lembrar a resposta antes de virar o cartão e diga se acertou.</p>
 
-@if (carregando()) {
-  <p class="aviso">Carregando seus cartões…</p>
-} @else if (erro()) {
+@if (carregandoMaterias()) {
+  <p class="aviso">Carregando suas matérias…</p>
+} @else if (erro() && cartoes().length === 0) {
   <p class="msg-erro-app">{{ erro() }}</p>
+} @else if (cartoes().length === 0 && !gerando() && materias().length === 0) {
+  <section class="cartao-app inicio">
+    <p class="detalhe">Cadastre uma matéria antes de gerar flashcards.</p>
+    <a routerLink="/app/materias" class="btn-acento">Ir para Matérias</a>
+  </section>
+} @else if (cartoes().length === 0 && !gerando()) {
+  <section class="cartao-app inicio">
+    <div class="campo-app">
+      <label for="flashcards-materia">Matéria</label>
+      <select id="flashcards-materia" name="materia" [ngModel]="materiaEscolhida()" (ngModelChange)="materiaEscolhida.set($event)">
+        <option [ngValue]="null" disabled>Selecione uma matéria…</option>
+        @for (materia of materias(); track materia.id) {
+          <option [ngValue]="materia">{{ materia.nome }}</option>
+        }
+      </select>
+    </div>
+    <div class="acoes-inicio">
+      <button type="button" class="btn-contorno" (click)="praticarComBanco()" [disabled]="!materiaEscolhida()">
+        Praticar com banco de flashcards
+      </button>
+      <button type="button" class="btn-acento" (click)="gerar()" [disabled]="!materiaEscolhida()">
+        Gerar flashcards com IA
+      </button>
+    </div>
+  </section>
+} @else if (gerando()) {
+  <section class="cartao-app gerando" role="status">
+    <span class="pontos" aria-hidden="true"><span></span><span></span><span></span></span>
+    <p>A IA está montando seus flashcards de <strong>{{ materiaEscolhida()?.nome }}</strong>…</p>
+  </section>
 } @else if (terminou()) {
   <section class="cartao-app resumo">
     <h2>Revisão concluída</h2>
@@ -29,11 +59,17 @@
       </div>
     }
 
-    <button type="button" class="btn-acento" (click)="reiniciar()">Revisar de novo</button>
+    <div class="acoes-final">
+      <button type="button" class="btn-acento" (click)="gerar()">Gerar outro lote</button>
+      <button type="button" class="btn-contorno" (click)="reiniciar()">Trocar de matéria</button>
+    </div>
   </section>
 } @else if (atual(); as cartao) {
   <div class="area-cartao">
-    <p class="contagem" aria-live="polite">Cartão {{ indice() + 1 }} de {{ cartoes().length }}</p>
+    <p class="contagem" aria-live="polite">
+      Cartão {{ indice() + 1 }} de {{ cartoes().length }}
+      · {{ doBanco() ? 'banco de flashcards' : 'gerado agora pela IA' }}
+    </p>
 
     <button type="button" class="cartao-app carta" [class]="classe()" (click)="virar()">
       <span class="carta-topo">

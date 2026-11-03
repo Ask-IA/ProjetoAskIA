@@ -51,6 +51,20 @@ export class AuthService {
     return this.http.post<UserResponse>(`${this.apiUrl}/register`, data);
   }
 
+  /**
+   * "Esqueci minha senha": o backend sempre responde com sucesso, exista ou
+   * não a conta — por segurança, não dá pra saber por aqui se o e-mail/nome
+   * está cadastrado. A tela mostra a mesma mensagem nos dois casos.
+   */
+  esqueciSenha(identificador: string): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/esqueci-senha`, { identificador });
+  }
+
+  /** Troca a senha a partir do token recebido por e-mail (link de "esqueci minha senha"). */
+  redefinirSenha(token: string, novaSenha: string): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/redefinir-senha`, { token, novaSenha });
+  }
+
   logout(): Observable<void> {
     // Esquece o usuário mesmo se o backend falhar: a tela volta para o login.
     return this.http.post<void>(`${this.apiUrl}/logout`, {}).pipe(

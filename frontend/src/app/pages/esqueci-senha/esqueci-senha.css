@@ -1,0 +1,6 @@
+/* Login, Cadastro, Esqueci-senha e Redefinir-senha usam as mesmas classes
+   (.auth-*, .campo-app, .campo-senha), que ficam no styles.css global. */
+
+:host {
+  display: block;
+}

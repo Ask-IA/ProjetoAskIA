@@ -11,10 +11,11 @@ import { Component, Injector, afterNextRender, computed, inject, input } from '@
 import { AskIaService, MensagemIa, NOME_MODO } from '../../../services/ask-ia.service';
 import { NOME_AREA, classeArea } from '../../../core/areas';
 import { TrechosPipe } from '../../../shared/trechos.pipe';
+import { FormulaMatematica } from '../../../shared/formula-matematica';
 
 @Component({
   selector: 'app-resposta-ia',
-  imports: [TrechosPipe],
+  imports: [TrechosPipe, FormulaMatematica],
   templateUrl: './resposta-ia.html',
   styleUrl: './resposta-ia.css',
 })

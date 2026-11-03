@@ -3,43 +3,32 @@
 // Ask IA: estado das conversas + chamadas à IA.
 //
 // 1) HISTÓRICO (REAL, vem do backend)
-//    As conversas são carregadas de GET /api/conversas e cada pergunta com a
-//    resposta é gravada em POST /api/conversas/interacoes. Assim o histórico
-//    sobrevive ao F5 e é sempre o do usuário logado (o backend filtra pela sessão).
+//    As conversas são carregadas de GET /api/conversas. Cada pergunta é
+//    enviada e já volta com a resposta da IA e o histórico salvo, num único
+//    POST /api/ia/perguntar — o backend valida a cota, chama a IA (OpenAI,
+//    via IaService) e grava a interação, tudo numa só ida ao servidor.
 //    O estado vive aqui, e não no componente, para a conversa não sumir quando o
 //    aluno vai ao Painel e volta. Ele é ZERADO ao sair/trocar de conta (limpar()).
 //
 // 2) COTA DIÁRIA (REAL, POR USUÁRIO)
 //    Quem conta e barra é o BACKEND: GET /api/conversas/cota diz quantas perguntas
-//    restam hoje e o POST /interacoes responde 429 quando acabam. A conta é feita
-//    sobre as perguntas que o próprio usuário gravou, então cada conta tem a sua.
+//    restam hoje e o POST /perguntar responde 429 quando acabam (a cota é checada
+//    ANTES de chamar o modelo, pra não gastar uma chamada de API à toa). A conta é
+//    feita sobre as perguntas que o próprio usuário gravou, então cada conta tem a sua.
 //
-// 3) IA (AINDA DADOS FALSOS)
-//    perguntar() continua mock até o motor de IA ser conectado.
-//    Contrato proposto para a IA (proposta para o João):
-//    - area: 'linguagens' | 'humanas' | 'natureza' | 'matematica' | null
-//    - topico: nome curto do assunto (ex.: "Função afim")
-//    - passos[].formula: opcional, a fórmula do passo em texto
-//    - termos-chave entre ==sinais de igual== (viram marca-texto na tela)
-//    - tenteVoce: { pergunta, resposta } — um exercício curto no fim
-//    O modo (explicar, resolver, plano) vai junto com a pergunta.
+// 3) IA (REAL — OpenAI via Spring AI, do lado do backend)
+//    O contrato da resposta (area, topico, passos[].formula, termos-chave entre
+//    ==sinais de igual==, tenteVoce) é pedido no prompt do IaService e chega pronto
+//    aqui, já no formato de RespostaIA — este arquivo só faz a conversão de tipos.
 //
-// Para TESTAR na tela:
-// - digite "erro"   → o mock devolve falha 500 (o texto continua no campo);
-// - digite "demora" → a resposta leva 14 s (aparecem os avisos de espera e o Cancelar);
-// - a cota (10 por dia, por usuário) vem do backend; na 11ª pergunta do dia vem o 429.
-//
-// TODO (integração): trocar perguntar() e cotaRestante() pelos endpoints do João
-// (ex.: POST {apiUrl}/api/ia/perguntar). Quando o backend chamar a IA e gravar o
-// histórico sozinho, apague salvar() e o POST /api/conversas/interacoes.
-// TODO (integração): decidir com a equipe a biblioteca de Markdown + fórmulas
-// (ex.: ngx-markdown + KaTeX). Quando entrar, cada fórmula vai num bloco com
-// overflow-x: auto para não estourar a largura no celular.
+// TODO: trocar a biblioteca de Markdown + fórmulas (ex.: ngx-markdown + KaTeX) pra
+// as fórmulas pararem de aparecer como texto puro. Quando entrar, cada fórmula vai
+// num bloco com overflow-x: auto para não estourar a largura no celular.
 
 import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { Observable, of, throwError } from 'rxjs';
-import { delay, map, mergeMap, switchMap, tap } from 'rxjs/operators';
+import { Observable } from 'rxjs';
+import { map, tap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import { AreaEnem, AREAS } from '../core/areas';
 
@@ -99,7 +88,7 @@ export interface Conversa {
   carregada: boolean;
 }
 
-// ---- Formatos que o backend devolve (ConversaController) ----
+// ---- Formatos que o backend devolve ----
 
 interface ConversaResumoApi {
   id: number;
@@ -107,11 +96,6 @@ interface ConversaResumoApi {
   area: string | null;
   criadaEm: string;
   atualizadaEm: string;
-}
-
-interface InteracaoApi {
-  conversa: ConversaResumoApi;
-  cotaRestante: number;
 }
 
 interface PaginaApi<T> {
@@ -138,9 +122,22 @@ interface ConversaDetalheApi extends ConversaResumoApi {
   mensagens: MensagemApi[];
 }
 
+/** Resposta estruturada da IA, como o IaController (backend) devolve. */
+interface RespostaIaApi {
+  area: string | null;
+  topico: string | null;
+  passos: { titulo: string; conteudo: string; formula: string | null }[];
+  tenteVoce: { pergunta: string; resposta: string } | null;
+}
+
+/** POST /api/ia/perguntar: a conversa, a resposta da IA e a cota, numa só ida ao servidor. */
+interface PerguntarApi {
+  conversa: ConversaResumoApi;
+  resposta: RespostaIaApi;
+  cotaRestante: number;
+}
+
 export const COTA_DIARIA = 10;
-const ATRASO_IA = 1400;      // ms — a IA "pensando", para a tela exibir o carregando
-const ATRASO_LONGO = 14000;  // ms — para testar os avisos de espera
 
 /** Quantas conversas a lista traz de uma vez (o backend aceita até 50). */
 const TAMANHO_DA_LISTA = 50;
@@ -149,6 +146,7 @@ const TAMANHO_DA_LISTA = 50;
 export class AskIaService {
   private http = inject(HttpClient);
   private readonly api = `${environment.apiUrl}/api/conversas`;
+  private readonly apiIa = `${environment.apiUrl}/api/ia`;
 
   /** Conversas ainda não salvas recebem id negativo; o backend dá o id verdadeiro. */
   private proximoIdLocal = -1;
@@ -259,33 +257,35 @@ export class AskIaService {
   }
 
   /**
-   * Envia a pergunta, pede a resposta à IA e SALVA os dois no backend.
+   * Envia a pergunta para a IA de verdade e já recebe de volta a resposta +
+   * a conversa salva + a cota atualizada, num único POST /api/ia/perguntar.
    * A conversa é "capturada" no envio: se o aluno trocar de tela ou de
    * conversa enquanto a IA pensa, a resposta cai no lugar em que foi pedida.
-   * Cancelar (unsubscribe) ou falhar (na IA ou ao salvar) tira a pergunta da conversa.
-   * A resposta só aparece na tela depois de salva: o que se vê é o que está no histórico.
+   * Cancelar (unsubscribe) ou falhar (IA indisponível, 429, etc.) tira a
+   * pergunta da conversa. A resposta só aparece na tela depois de salva no
+   * servidor: o que se vê é o que está no histórico.
    */
   enviarPergunta(texto: string, modo: ModoAjuda): Observable<RespostaIA> {
     const conversaId = this.registrarPergunta(texto);
     this.aguardando.set(conversaId);
 
-    return this.perguntar(texto, modo).pipe(
-      switchMap(resposta =>
-        this.salvar(conversaId, texto, modo, resposta).pipe(
-          // a cota restante vem do servidor (a do mock não vale)
-          map(salvo => ({ resposta: { ...resposta, cotaRestante: salvo.cotaRestante }, resumo: salvo.conversa }))
-        )
-      ),
+    const corpo = {
+      conversaId: conversaId > 0 ? conversaId : null, // id negativo = conversa nova
+      modo,
+      pergunta: texto,
+    };
+
+    return this.http.post<PerguntarApi>(`${this.apiIa}/perguntar`, corpo).pipe(
       tap({
-        next: ({ resposta, resumo }) => {
-          const idReal = this.confirmarConversa(conversaId, resumo);
-          this.registrarResposta(idReal, resposta);
+        next: api => {
+          const idReal = this.confirmarConversa(conversaId, api.conversa);
+          this.registrarResposta(idReal, paraRespostaIA(api.resposta, modo, api.cotaRestante));
         },
         error: () => this.removerUltimaPergunta(conversaId),
         unsubscribe: () => this.removerUltimaPergunta(conversaId),
         finalize: () => this.aguardando.set(null),
       }),
-      map(({ resposta }) => resposta)
+      map(api => paraRespostaIA(api.resposta, modo, api.cotaRestante))
     );
   }
 
@@ -298,25 +298,6 @@ export class AskIaService {
 
   abrirTenteVoce(indiceMensagem: number): void {
     this.alterarMensagemIa(indiceMensagem, m => ({ ...m, tenteVoceAberto: true }));
-  }
-
-  /**
-   * POST /api/conversas/interacoes: grava pergunta + resposta e devolve a conversa atualizada
-   * e a cota que sobrou. Responde 429 (e não grava nada) se o limite do dia já foi atingido.
-   */
-  private salvar(conversaId: number, pergunta: string, modo: ModoAjuda, resposta: RespostaIA): Observable<InteracaoApi> {
-    const corpo = {
-      conversaId: conversaId > 0 ? conversaId : null, // id negativo = conversa nova
-      modo,
-      pergunta,
-      resposta: {
-        area: resposta.area,
-        topico: resposta.topico,
-        passos: resposta.passos.map(p => ({ titulo: p.titulo, conteudo: p.conteudo, formula: p.formula ?? null })),
-        tenteVoce: resposta.tenteVoce,
-      },
-    };
-    return this.http.post<InteracaoApi>(`${this.api}/interacoes`, corpo);
   }
 
   /** Troca o id provisório pelo id real e copia título, área e data que o servidor definiu. */
@@ -432,33 +413,13 @@ export class AskIaService {
     }));
   }
 
-  // ================= 2) Chamadas à IA (mock) =================
+  // ================= 2) Cota diária =================
 
   /** Quantas perguntas o usuário logado ainda pode fazer hoje (GET /api/conversas/cota). */
   cotaRestante(): Observable<number> {
     return this.http.get<{ limite: number; usadas: number; restantes: number }>(`${this.api}/cota`).pipe(
       map(cota => cota.restantes)
     );
-  }
-
-  perguntar(pergunta: string, modo: ModoAjuda): Observable<RespostaIA> {
-    const texto = normalizar(pergunta);
-
-    // Simulação de erro do servidor, para testar o estado de erro da tela
-    if (texto === 'erro') {
-      return of(null).pipe(
-        delay(ATRASO_IA),
-        mergeMap(() => throwError(() => ({ status: 500, message: 'Erro simulado do servidor.' })))
-      );
-    }
-
-    // A cota NÃO é checada aqui: o backend confere e barra (429) ao salvar.
-    // TODO: quando a IA de verdade existir, o backend deve checar a cota ANTES de chamar o modelo.
-    const resposta: RespostaIA = {
-      ...montarResposta(pergunta, texto, modo),
-      cotaRestante: 0, // provisório: enviarPergunta troca pelo valor real do servidor
-    };
-    return of(resposta).pipe(delay(texto === 'demora' ? ATRASO_LONGO : ATRASO_IA));
   }
 
   /** Horário em que a cota reinicia (virada do dia). */
@@ -513,195 +474,27 @@ function paraMensagem(api: MensagemApi, area: AreaEnem | null): Mensagem {
   };
 }
 
-// ================= Conteúdo de demonstração =================
-
-interface Tema {
-  gatilho: RegExp;
-  area: AreaEnem;
-  topico: string;
-  passos: PassoResposta[];
-  tenteVoce: TenteVoce;
+/** Resposta real da IA (POST /api/ia/perguntar) → formato que a tela usa. */
+function paraRespostaIA(api: RespostaIaApi, modo: ModoAjuda, cotaRestante: number): RespostaIA {
+  const passos: PassoResposta[] = api.passos.map(p => ({
+    titulo: p.titulo,
+    conteudo: p.conteudo,
+    ...(p.formula ? { formula: p.formula } : {}),
+  }));
+  return {
+    area: paraArea(api.area),
+    topico: api.topico,
+    modo,
+    passos,
+    tenteVoce: api.tenteVoce ? { pergunta: api.tenteVoce.pergunta, resposta: api.tenteVoce.resposta } : null,
+    cotaRestante,
+  };
 }
 
-const TEMAS: Tema[] = [
-  {
-    gatilho: /funcao afim|primeiro grau|1o grau/,
-    area: 'matematica',
-    topico: 'Função afim',
-    passos: [
-      {
-        titulo: 'O que é',
-        conteudo: 'Função afim é toda função da forma f(x) = ax + b, com a ≠ 0. O gráfico dela é sempre uma reta.',
-        formula: 'f(x) = a·x + b',
-      },
-      {
-        titulo: 'O papel de cada letra',
-        conteudo: 'O a é a ==taxa de variação==: quanto f(x) muda quando x aumenta 1. O b é onde a reta ==corta o eixo y==, ou seja, f(0).',
-      },
-      {
-        titulo: 'Exemplo',
-        conteudo: 'Um táxi cobra R$ 5,00 fixos mais R$ 2,00 por km: f(x) = 2x + 5. Para 8 km, f(8) = 2·8 + 5 = 21, ou seja, R$ 21,00.',
-      },
-      {
-        titulo: 'Resumo',
-        conteudo: 'O a diz ==quanto cresce==; o b diz ==de onde parte==.',
-      },
-    ],
-    tenteVoce: {
-      pergunta: 'Com a mesma tarifa, quanto custa uma corrida de 12 km?',
-      resposta: 'f(12) = 2·12 + 5 = 29, ou seja, R$ 29,00.',
-    },
-  },
-  {
-    gatilho: /crase/,
-    area: 'linguagens',
-    topico: 'Crase',
-    passos: [
-      {
-        titulo: 'O que é',
-        conteudo: 'Crase é a ==fusão da preposição a com o artigo a==. Ela aparece como acento grave: à.',
-      },
-      {
-        titulo: 'Teste rápido',
-        conteudo: 'Troque a palavra feminina por uma masculina. Se aparecer ==ao==, use crase: "Vou à escola" → "Vou ao colégio".',
-      },
-      {
-        titulo: 'Quando não usar',
-        conteudo: 'Antes de palavra masculina, de verbo e da maioria dos pronomes: "Vou a pé", "Começou a chover", "Refiro-me a ela".',
-      },
-      {
-        titulo: 'Resumo',
-        conteudo: 'Apareceu "ao" no masculino? Então ==no feminino é à==.',
-      },
-    ],
-    tenteVoce: {
-      pergunta: '"Entreguei o trabalho ___ professora." Vai crase?',
-      resposta: 'Sim. No masculino seria "ao professor", então no feminino é "à professora".',
-    },
-  },
-  {
-    gatilho: /vargas|estado novo/,
-    area: 'humanas',
-    topico: 'Era Vargas',
-    passos: [
-      {
-        titulo: 'O que foi',
-        conteudo: 'Período de 1930 a 1945 em que Getúlio Vargas governou o Brasil. Começou com a ==Revolução de 1930==.',
-      },
-      {
-        titulo: 'As três fases',
-        conteudo: 'Governo Provisório (1930–1934), Governo Constitucional (1934–1937) e ==Estado Novo== (1937–1945), que foi uma ditadura.',
-      },
-      {
-        titulo: 'O que marcou',
-        conteudo: 'Centralização do poder, voto feminino (1932), a ==CLT== (1943) e investimento na indústria de base, como a Companhia Siderúrgica Nacional.',
-      },
-      {
-        titulo: 'Resumo',
-        conteudo: 'Modernização e direitos trabalhistas, mas ==com censura e repressão== no Estado Novo.',
-      },
-    ],
-    tenteVoce: {
-      pergunta: 'Em que ano começou o Estado Novo?',
-      resposta: 'Em 1937, com o golpe que fechou o Congresso e impôs uma nova Constituição.',
-    },
-  },
-  {
-    gatilho: /newton|inercia/,
-    area: 'natureza',
-    topico: 'Primeira lei de Newton',
-    passos: [
-      {
-        titulo: 'O que diz',
-        conteudo: 'Todo corpo continua ==parado ou em movimento retilíneo uniforme== se a força resultante sobre ele for zero.',
-      },
-      {
-        titulo: 'Inércia',
-        conteudo: 'É a tendência de manter o estado de movimento. Quanto ==maior a massa, maior a inércia==.',
-      },
-      {
-        titulo: 'Exemplo',
-        conteudo: 'Quando o ônibus freia de repente, seu corpo continua indo para a frente. É por isso que existe o cinto de segurança.',
-      },
-      {
-        titulo: 'Resumo',
-        conteudo: 'Sem força resultante, ==nada muda no movimento==.',
-      },
-    ],
-    tenteVoce: {
-      pergunta: 'Por que dá para puxar a toalha rápido sem derrubar os pratos da mesa?',
-      resposta: 'Por inércia: o puxão é rápido demais para mudar o movimento dos pratos, que tendem a continuar parados.',
-    },
-  },
-];
+// ================= auxiliares =================
 
-function normalizar(texto: string): string {
-  return texto.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/º/g, 'o').trim();
-}
-
+/** Mesma regra do backend (ConversaService.resumirTitulo): junta espaços e corta em ~42 caracteres com reticências. */
 function resumirTitulo(pergunta: string): string {
   const limpo = pergunta.replace(/\s+/g, ' ').trim();
   return limpo.length > 42 ? limpo.slice(0, 40).trimEnd() + '…' : limpo;
-}
-
-function montarResposta(pergunta: string, texto: string, modo: ModoAjuda): Omit<RespostaIA, 'cotaRestante'> {
-  const tema = TEMAS.find(t => t.gatilho.test(texto)) ?? null;
-
-  if (modo === 'plano') {
-    const assunto = tema ? tema.topico.toLowerCase() : 'esse assunto';
-    return {
-      area: tema?.area ?? null,
-      topico: tema?.topico ?? null,
-      modo,
-      tenteVoce: null,
-      passos: [
-        {
-          titulo: 'Dia 1 · Entender a base (30 min)',
-          conteudo: `Peça ao Ask IA, no modo Explicar, a ideia central de ${assunto}. Anote ==com as suas palavras== o que entendeu.`,
-        },
-        {
-          titulo: 'Dia 2 · Resolver junto (30 min)',
-          conteudo: 'Resolva 3 exemplos no modo Resolver, tentando cada passo ==antes de ver o próximo==.',
-        },
-        {
-          titulo: 'Dia 3 · Praticar sozinho (40 min)',
-          conteudo: 'Faça um quiz da matéria e anote as questões que errou.',
-        },
-        {
-          titulo: 'Dia 4 · Revisar o que errou (20 min)',
-          conteudo: 'Revise nos flashcards só o que você errou. Se errar de novo, ==volte ao Dia 1== nesse ponto.',
-        },
-      ],
-    };
-  }
-
-  if (tema) {
-    return { area: tema.area, topico: tema.topico, modo, passos: tema.passos, tenteVoce: tema.tenteVoce };
-  }
-
-  return {
-    area: null,
-    topico: null,
-    modo,
-    tenteVoce: null,
-    passos: [
-      {
-        titulo: 'Entendendo a pergunta',
-        conteudo: `Você perguntou: "${pergunta}". Vamos por partes, começando pelo ==conceito principal== envolvido.`,
-      },
-      {
-        titulo: 'Explicação do conceito',
-        conteudo: 'Aqui entraria a explicação passo a passo gerada pela IA de verdade. Neste momento o app está com dados '
-          + 'de demonstração: o motor de IA (Gemini) será conectado na fase de integração.',
-      },
-      {
-        titulo: 'Exemplo prático',
-        conteudo: 'Um exemplo resolvido apareceria aqui, com os cálculos ou argumentos organizados linha a linha para você acompanhar.',
-      },
-      {
-        titulo: 'Resumo',
-        conteudo: 'No final, a IA resume a ideia central em poucas frases para ==fixar==.',
-      },
-    ],
-  };
 }

@@ -1,5 +1,13 @@
 /* src/app/pages/flashcards/flashcards.css */
 
+.inicio { max-width: 440px; }
+.acoes-inicio { display: flex; flex-wrap: wrap; gap: 10px; }
+.acoes-inicio .btn-acento,
+.acoes-inicio .btn-contorno { flex: 1; min-width: 160px; }
+
+.gerando { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 40px 24px; color: var(--texto-suave); text-align: center; }
+.gerando p { margin: 0; color: var(--texto); }
+
 .area-cartao { display: flex; flex-direction: column; align-items: center; gap: 16px; }
 .contagem { margin: 0; color: var(--texto-suave); font-size: .9rem; }
 
@@ -15,9 +23,11 @@
   padding: 18px 22px 20px;
   border-width: 1.5px;
   text-align: center;
-  transition: border-color .2s;
+  transition: border-color .2s, transform .2s ease, box-shadow .2s ease;
+  cursor: pointer;
 }
-.carta:hover { border-color: var(--borda-campo); }
+.carta:hover { border-color: var(--borda-campo); transform: translateY(-2px); box-shadow: 0 8px 20px -12px rgb(0 0 0 / .25); }
+.carta:active { transform: translateY(0); }
 .carta-topo { display: flex; align-items: center; justify-content: space-between; width: 100%; }
 .lado { color: var(--texto-suave); font-size: .8125rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
 .conteudo { font-size: 1.2rem; line-height: 1.5; }
@@ -36,6 +46,9 @@
   font-size: 1rem;
   font-weight: 700;
 }
+.btn-resposta { transition: transform .15s ease, box-shadow .15s ease; }
+.btn-resposta:hover { transform: translateY(-1px); }
+.btn-resposta:active { transform: translateY(0); }
 .errei { border-color: var(--erro); background: var(--erro-suave); color: var(--erro); }
 .acertei { border-color: var(--sucesso); background: var(--sucesso-suave); color: var(--sucesso); }
 
@@ -65,3 +78,5 @@
   padding: 10px 0;
   border-top: 1px solid var(--linha);
 }
+
+.acoes-final { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }

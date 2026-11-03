@@ -1,10 +1,11 @@
 // src/app/pages/quiz/quiz.ts
 //
-// Quiz por matéria (ainda com DADOS FALSOS).
-// O que chega de forma assíncrona (lista de matérias, questões "geradas"
+// Quiz por matéria, gerado pela IA (OpenAI, via backend) a partir das
+// matérias/tópicos que o aluno já cadastrou em Matérias.
+//
+// O que chega de forma assíncrona (lista de matérias, questões geradas
 // pela IA) fica em signals — no modo zoneless é o que faz a tela redesenhar.
 //
-// Mudanças de 24/09:
 // - certo e errado com ícone e TEXTO ("Resposta certa", "Sua resposta"),
 //   não só borda verde e vermelha (WCAG 1.4.1; o daltonismo mais comum
 //   confunde justamente vermelho e verde);
@@ -15,6 +16,7 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { QuestaoQuiz, RevisaoService } from '../../services/revisao.service';
+import { EstudosService, Materia } from '../../services/estudos.service';
 import { Icone } from '../../shared/icone';
 
 @Component({
@@ -27,10 +29,11 @@ import { Icone } from '../../shared/icone';
 })
 export class Quiz implements OnInit {
   private revisao = inject(RevisaoService);
+  private estudos = inject(EstudosService);
 
   readonly letras = ['A', 'B', 'C', 'D', 'E'];
 
-  materias = signal<string[]>([]);
+  materias = signal<Materia[]>([]);
   questoes = signal<QuestaoQuiz[]>([]);
   gerando = signal(false);
   terminou = signal(false);
@@ -41,16 +44,19 @@ export class Quiz implements OnInit {
   respondida = signal(false);
   acertos = signal(0);
 
-  materiaEscolhida = signal<string | null>(null);
+  materiaEscolhida = signal<Materia | null>(null);
+
+  /** true = este lote veio do banco curado (sem IA), não foi gerado agora. */
+  doBanco = signal(false);
 
   atual = computed<QuestaoQuiz | null>(() => this.questoes()[this.indice()] ?? null);
   acertouAtual = computed(() => this.respostaSelecionada() === this.atual()?.correta);
   foiBem = computed(() => this.acertos() >= this.questoes().length * 0.7);
 
   ngOnInit(): void {
-    this.revisao.materiasComQuiz().subscribe({
+    this.estudos.listarMaterias().subscribe({
       next: m => this.materias.set(m),
-      error: () => this.erro.set('Não foi possível carregar as matérias.'),
+      error: () => this.erro.set('Não foi possível carregar suas matérias.'),
     });
   }
 
@@ -60,9 +66,10 @@ export class Quiz implements OnInit {
     this.gerando.set(true);
     this.erro.set('');
 
-    this.revisao.gerarQuiz(materia).subscribe({
-      next: questoes => {
-        this.questoes.set(questoes);
+    this.revisao.gerarQuiz(materia.id).subscribe({
+      next: resultado => {
+        this.doBanco.set(resultado.doBanco);
+        this.questoes.set(resultado.itens);
         this.gerando.set(false);
         this.indice.set(0);
         this.acertos.set(0);
@@ -72,7 +79,36 @@ export class Quiz implements OnInit {
       },
       error: () => {
         this.gerando.set(false);
-        this.erro.set('Não foi possível gerar o quiz agora.');
+        this.erro.set('Não foi possível gerar o quiz agora — nem pela IA, nem pelo banco de questões. Tente de novo em instantes.');
+      },
+    });
+  }
+
+  /** Puxa questões prontas do banco curado pela equipe — não usa IA, não gasta cota. */
+  praticarComBanco(): void {
+    const materia = this.materiaEscolhida();
+    if (!materia) return;
+    this.gerando.set(true);
+    this.erro.set('');
+
+    this.revisao.quizDoBanco(materia.nome).subscribe({
+      next: questoes => {
+        this.gerando.set(false);
+        if (questoes.length === 0) {
+          this.erro.set(`Ainda não há banco de questões pronto para "${materia.nome}". Tente gerar com a IA.`);
+          return;
+        }
+        this.doBanco.set(true);
+        this.questoes.set(questoes);
+        this.indice.set(0);
+        this.acertos.set(0);
+        this.terminou.set(false);
+        this.respondida.set(false);
+        this.respostaSelecionada.set(null);
+      },
+      error: () => {
+        this.gerando.set(false);
+        this.erro.set('Não foi possível carregar o banco de questões agora.');
       },
     });
   }

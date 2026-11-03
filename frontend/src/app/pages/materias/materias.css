@@ -15,17 +15,29 @@
 .item-materia {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 4px;
   width: 100%;
-  padding: 14px 16px;
+  padding: 6px 8px 6px 16px;
   border: 1.5px solid var(--linha);
   border-radius: 14px;
   background: var(--cartao);
-  text-align: left;
+  transition: border-color .15s ease, background-color .15s ease;
 }
 .item-materia:hover { border-color: var(--borda-campo); }
 /* selecionada: borda na cor de ação E fundo suave (não depende só da cor da borda) */
 .item-materia.selecionada { border-color: var(--acento); background: var(--acento-suave); }
+
+/* Botão interno que seleciona a matéria; o "x"/lixeira fica fora dele,
+   porque HTML não permite botão dentro de botão. */
+.item-materia-selecionar {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 8px 0;
+  text-align: left;
+}
 .info { display: flex; flex: 1; flex-direction: column; min-width: 0; }
 .info small { color: var(--texto-suave); font-size: .8125rem; }
 
@@ -46,6 +58,7 @@
 .topico input { width: 20px; height: 20px; accent-color: var(--acento); flex-shrink: 0; }
 .topico-texto { display: flex; flex-direction: column; }
 .topico-texto small { color: var(--texto-suave); font-size: .8125rem; }
+.topico-texto .nome-topico { transition: color .2s ease; }
 .topico-texto.feito .nome-topico { color: var(--texto-suave); text-decoration: line-through; }
 
 .temporizador { margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--linha); text-align: center; }
@@ -60,6 +73,21 @@
   font-size: 2.6rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+  transition: border-color .2s ease;
+}
+.mostrador.rodando {
+  border-color: var(--acento);
+}
+.mostrador.rodando::after {
+  content: '';
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-left: 12px;
+  border-radius: 50%;
+  background: var(--acento);
+  vertical-align: middle;
+  animation: pulsar 1.4s ease-in-out infinite;
 }
 .controles { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
 .terminou p { margin: 0 0 12px; font-weight: 600; }

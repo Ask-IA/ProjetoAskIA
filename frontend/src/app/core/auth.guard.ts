@@ -4,10 +4,10 @@
 // Antes de qualquer rota protegida abrir, pergunta ao backend se existe
 // sessão válida (GET /auth/me). 200 = deixa passar; 401/erro = manda pro login.
 //
-// Detalhe importante: o guard só olha o CÓDIGO DE STATUS da resposta.
-// O corpo do /auth/me hoje vem vazio (bug conhecido do backend, já reportado
-// ao Jorge) — mas isso não afeta o guard, que não precisa dos dados do
-// usuário, só de saber se a sessão existe.
+// Detalhe importante: o guard só olha o CÓDIGO DE STATUS da resposta — não
+// usa os dados do usuário que vêm no corpo (name/email), só precisa saber se
+// a sessão existe. Quem usa esses dados é o AuthService (auth.service.ts),
+// que guarda o usuário no signal `usuario` para o menu e o Painel lerem.
 
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';

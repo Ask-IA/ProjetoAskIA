@@ -1,0 +1,9 @@
+/* Mesmo visual que a fórmula tinha como texto simples (ver resposta-ia.css,
+ * versão anterior), agora em torno do HTML que o KaTeX gera. */
+.formula-katex {
+  margin-top: 8px;
+  padding: 9px 14px;
+  overflow-x: auto;
+  border-radius: var(--raio-pequeno);
+  background: var(--fundo);
+}

@@ -12,6 +12,8 @@ import com.aski.IA.model.MateriaModel;
 import com.aski.IA.model.TopicoModel;
 import com.aski.IA.model.UserModel;
 import com.aski.IA.repository.MateriaRepository;
+import com.aski.IA.repository.MetaEstudoRepository;
+import com.aski.IA.repository.SessaoEstudoRepository;
 import com.aski.IA.repository.TopicoRepository;
 import com.aski.IA.repository.UserRepository;
 
@@ -27,13 +29,19 @@ public class MateriaService {
     private final MateriaRepository materiaRepository;
     private final TopicoRepository topicoRepository;
     private final UserRepository userRepository;
+    private final SessaoEstudoRepository sessaoEstudoRepository;
+    private final MetaEstudoRepository metaEstudoRepository;
 
     public MateriaService(MateriaRepository materiaRepository,
                           TopicoRepository topicoRepository,
-                          UserRepository userRepository) {
+                          UserRepository userRepository,
+                          SessaoEstudoRepository sessaoEstudoRepository,
+                          MetaEstudoRepository metaEstudoRepository) {
         this.materiaRepository = materiaRepository;
         this.topicoRepository = topicoRepository;
         this.userRepository = userRepository;
+        this.sessaoEstudoRepository = sessaoEstudoRepository;
+        this.metaEstudoRepository = metaEstudoRepository;
     }
 
     @Transactional(readOnly = true)
@@ -82,6 +90,19 @@ public class MateriaService {
         TopicoModel topico = topicoRepository.findByIdAndMateriaId(topicoId, materiaId)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Tópico não encontrado."));
         topicoRepository.delete(topico);
+    }
+
+    /**
+     * Apaga a matéria inteira: tópicos (cascade do JPA), sessões de estudo e
+     * metas do cronograma que apontem para ela. Sem isso, a FK materia_id de
+     * tb_sessoes_estudo/tb_metas_estudo barraria o delete.
+     */
+    @Transactional
+    public void removerMateria(Long usuarioId, Long materiaId) {
+        MateriaModel materia = buscarDoUsuario(usuarioId, materiaId);
+        sessaoEstudoRepository.deleteByMateriaId(materiaId);
+        metaEstudoRepository.deleteByMateriaId(materiaId);
+        materiaRepository.delete(materia);
     }
 
     /** Toda busca de matéria passa por aqui: id + dono. Sem isso, um usuário poderia ler a matéria de outro. */
