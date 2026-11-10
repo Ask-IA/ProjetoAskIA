@@ -18,7 +18,7 @@ export type NomeIcone =
   | 'materias' | 'cronograma' | 'progresso' | 'lua' | 'sair' | 'mais'
   | 'historico' | 'ampulheta' | 'enviar' | 'fogo' | 'relogio' | 'seta-direita'
   | 'check' | 'x' | 'lixeira' | 'menu' | 'brilho' | 'logo' | 'olho'
-  | 'olho-riscado' | 'presente' | 'capelo';
+  | 'olho-riscado' | 'presente' | 'capelo' | 'redacao';
 
 /** Traço mais grosso nos ícones pequenos de ação, mais fino na marca. */
 const ESPESSURA: Partial<Record<NomeIcone, number>> = {
@@ -134,6 +134,10 @@ const ESPESSURA: Partial<Record<NomeIcone, number>> = {
         @case ('presente') {
           <rect x="3.5" y="8.5" width="17" height="4" rx="1" /><path d="M5 12.5V20h14v-7.5" /><path d="M12 8.5V20" />
           <path d="M12 8.5c-1.5-3-5-3.5-5.5-1.5S9 8.5 12 8.5zM12 8.5c1.5-3 5-3.5 5.5-1.5S15 8.5 12 8.5z" />
+        }
+        @case ('redacao') {
+          <path d="M14 3.5H6.5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V9z" /><path d="M14 3.5V9h5.5" />
+          <path d="M8 13h8M8 16.5h5" />
         }
         @case ('capelo') {
           <path d="M2.5 9.5 12 5l9.5 4.5L12 14z" /><path d="M6.5 11.5V16c0 1.4 2.5 3 5.5 3s5.5-1.6 5.5-3v-4.5" />

@@ -36,12 +36,14 @@ const ASK: ItemMenu        = { rotulo: 'Ask IA',     rota: '/app/ask',        ic
 const PAINEL: ItemMenu     = { rotulo: 'Painel',     rota: '/app/painel',     icone: 'painel' };
 const QUIZ: ItemMenu       = { rotulo: 'Quiz IA',    rota: '/app/quiz',       icone: 'quiz' };
 const FLASHCARDS: ItemMenu = { rotulo: 'Flashcards', rota: '/app/flashcards', icone: 'flashcards' };
+const REDACAO: ItemMenu    = { rotulo: 'Redação',    rota: '/app/redacao',    icone: 'redacao' };
 const MATERIAS: ItemMenu   = { rotulo: 'Matérias',   rota: '/app/materias',   icone: 'materias' };
 const CRONOGRAMA: ItemMenu = { rotulo: 'Cronograma', rota: '/app/cronograma', icone: 'cronograma' };
 const PROGRESSO: ItemMenu  = { rotulo: 'Progresso',  rota: '/app/progresso',  icone: 'progresso' };
 
 const GRUPOS: Record<NomeGrupo, { rotulo: string; icone: NomeIcone; abas: ItemMenu[] }> = {
-  praticar: { rotulo: 'Praticar', icone: 'praticar', abas: [QUIZ, FLASHCARDS] },
+  // Redação entra em Praticar: no celular vira a 3ª aba do grupo, sem mexer nos 5 destinos da barra.
+  praticar: { rotulo: 'Praticar', icone: 'praticar', abas: [QUIZ, FLASHCARDS, REDACAO] },
   plano:    { rotulo: 'Plano',    icone: 'plano',    abas: [MATERIAS, CRONOGRAMA] },
 };
 
@@ -58,7 +60,7 @@ export class Layout {
   // Ask IA vem primeiro: a ordem do menu comunica a prioridade do produto.
   readonly gruposComputador: GrupoMenu[] = [
     { itens: [ASK, PAINEL] },
-    { rotulo: 'Praticar', itens: [QUIZ, FLASHCARDS] },
+    { rotulo: 'Praticar', itens: [QUIZ, FLASHCARDS, REDACAO] },
     { rotulo: 'Plano', itens: [MATERIAS, CRONOGRAMA] },
     { itens: [PROGRESSO] },
   ];

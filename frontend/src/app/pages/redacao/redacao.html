@@ -1,0 +1,102 @@
+<!-- src/app/pages/redacao/redacao.html -->
+
+<h1 class="pagina-titulo">Redação</h1>
+<p class="pagina-sub">Escreva no modelo do ENEM e receba uma nota estimada nas 5 competências, com o que melhorar em cada uma.</p>
+
+@if (erro()) {
+  <p class="msg-erro-app" role="alert">{{ erro() }}</p>
+}
+
+@switch (estado()) {
+
+  @case ('corrigindo') {
+    <section class="cartao-app corrigindo" role="status">
+      <span class="pontos" aria-hidden="true"><span></span><span></span><span></span></span>
+      <p>A IA está corrigindo sua redação nas 5 competências…</p>
+      <p class="detalhe">Pode levar até um minuto. Não feche a página.</p>
+    </section>
+  }
+
+  @case ('resultado') {
+    @if (correcao(); as c) {
+      <section class="cartao-app resultado" aria-labelledby="titulo-nota">
+        <p class="rotulo-secao" id="titulo-nota">Nota estimada</p>
+        <p class="nota-total">{{ c.notaTotal }} <span>/ 1000</span></p>
+        <p class="aviso-estimativa">Estimativa feita por IA para você treinar. Não é a nota oficial do ENEM.</p>
+
+        @if (c.motivoNotaZero) {
+          <p class="nota-zero"><strong>Nota zero:</strong> {{ c.motivoNotaZero }}</p>
+        }
+        @if (c.comentarioGeral) {
+          <p class="comentario-geral">{{ c.comentarioGeral }}</p>
+        }
+      </section>
+
+      <ol class="competencias">
+        @for (comp of c.competencias; track comp.numero) {
+          <li class="cartao-app competencia">
+            <div class="competencia-topo">
+              <h2><span class="numero">C{{ comp.numero }}</span> {{ comp.nome }}</h2>
+              <p class="competencia-nota">{{ comp.nota }}<span>/200</span></p>
+            </div>
+            <div class="barra" aria-hidden="true">
+              <span [style.width.%]="porcentagem(comp.nota)"></span>
+            </div>
+            @if (comp.comentario) {
+              <p class="comentario">{{ comp.comentario }}</p>
+            }
+            @if (comp.comoMelhorar) {
+              <p class="melhorar"><strong>Como melhorar:</strong> {{ comp.comoMelhorar }}</p>
+            }
+          </li>
+        }
+      </ol>
+
+      <div class="acoes-resultado">
+        <button type="button" class="btn-acento" (click)="editar()">Ajustar e corrigir de novo</button>
+        <button type="button" class="btn-contorno" (click)="novaRedacao()">Nova redação</button>
+      </div>
+      @if (restantes() !== null) {
+        <p class="restantes">Correções restantes hoje: {{ restantes() }}</p>
+      }
+    }
+  }
+
+  @default {
+    <section class="cartao-app formulario">
+      <div class="campo-app">
+        <label for="redacao-tema">Tema da proposta</label>
+        <input id="redacao-tema" name="tema" type="text" maxlength="300" autocomplete="off"
+               placeholder="Ex.: Desafios para a valorização da herança africana no Brasil"
+               [ngModel]="tema()" (ngModelChange)="mudarTema($event)" />
+      </div>
+
+      <div class="campo-app">
+        <label for="redacao-texto">Sua redação</label>
+        <textarea id="redacao-texto" name="texto" rows="16" aria-describedby="redacao-contagem"
+                  placeholder="Digite ou cole sua redação: introdução, desenvolvimento e conclusão com proposta de intervenção."
+                  [ngModel]="texto()" (ngModelChange)="mudarTexto($event)"></textarea>
+        <p class="contagem" id="redacao-contagem">
+          {{ palavras() }} palavras
+          @if (caracteres() > maximoDeCaracteres) {
+            · <span class="passou">passou do limite de {{ maximoDeCaracteres }} caracteres</span>
+          }
+          · rascunho salvo neste navegador
+        </p>
+      </div>
+
+      <div class="rodape-formulario">
+        <button type="button" class="btn-acento" (click)="corrigir()" [disabled]="!podeCorrigir()">
+          <app-icone nome="redacao" [tamanho]="18" /> Corrigir redação
+        </button>
+        <p class="detalhe" aria-live="polite">
+          @if (motivoBloqueio()) {
+            {{ motivoBloqueio() }}
+          } @else if (restantes() !== null) {
+            Correções restantes hoje: {{ restantes() }}
+          }
+        </p>
+      </div>
+    </section>
+  }
+}

@@ -1,0 +1,83 @@
+/* src/app/pages/redacao/redacao.css */
+
+.formulario,
+.resultado,
+.competencias { max-width: 760px; }
+
+.formulario textarea {
+  min-height: 320px;
+  resize: vertical;
+  line-height: 1.6;
+}
+
+.contagem { margin: 0; color: var(--texto-suave); font-size: .85rem; }
+.passou { color: var(--erro); font-weight: 600; }
+
+.rodape-formulario { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
+.rodape-formulario .btn-acento { display: inline-flex; align-items: center; gap: 8px; }
+.detalhe { margin: 0; color: var(--texto-suave); font-size: .9rem; }
+
+.corrigindo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  max-width: 760px;
+  padding: 40px 24px;
+  color: var(--texto-suave);
+  text-align: center;
+}
+.corrigindo p { margin: 0; color: var(--texto); }
+.corrigindo .detalhe { color: var(--texto-suave); }
+
+/* ---------- resultado ---------- */
+
+.resultado { margin-bottom: 16px; }
+/* a nota fica em --texto: azul é só para o que é tocável */
+.nota-total { margin: 6px 0 4px; font-size: 2.8rem; font-weight: 700; line-height: 1.1; }
+.nota-total span { color: var(--texto-suave); font-size: 1.1rem; font-weight: 600; }
+.aviso-estimativa { margin: 0 0 12px; color: var(--texto-suave); font-size: .875rem; }
+.comentario-geral { margin: 0; line-height: 1.55; }
+
+.nota-zero {
+  margin: 0 0 12px;
+  padding: 10px 14px;
+  border: 1px solid var(--erro);
+  border-radius: var(--raio-pequeno);
+  background: var(--erro-suave);
+  color: var(--erro);
+}
+
+.competencias { display: flex; flex-direction: column; gap: 12px; margin: 0 0 18px; padding: 0; list-style: none; }
+
+.competencia-topo { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.competencia h2 { margin: 0; font-size: 1rem; font-weight: 700; line-height: 1.35; }
+.numero {
+  display: inline-block;
+  margin-right: 6px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--acento-suave);
+  color: var(--menu-ativo-texto);
+  font-size: .8125rem;
+}
+.competencia-nota { margin: 0; font-size: 1.25rem; font-weight: 700; white-space: nowrap; }
+.competencia-nota span { color: var(--texto-suave); font-size: .875rem; font-weight: 600; }
+
+.barra { height: 8px; margin: 10px 0 12px; border-radius: 999px; background: var(--trilha); overflow: hidden; }
+.barra span { display: block; height: 100%; border-radius: inherit; background: var(--acento); transition: width .4s ease; }
+
+.comentario { margin: 0 0 8px; line-height: 1.55; }
+.melhorar {
+  margin: 0;
+  padding: 10px 12px;
+  border-left: 3px solid var(--acento);
+  border-radius: 0 var(--raio-pequeno) var(--raio-pequeno) 0;
+  background: var(--fundo);
+  line-height: 1.5;
+}
+
+.acoes-resultado { display: flex; flex-wrap: wrap; gap: 10px; }
+.acoes-resultado .btn-acento,
+.acoes-resultado .btn-contorno { flex: 1; min-width: 200px; max-width: 320px; }
+.restantes { margin: 12px 0 0; color: var(--texto-suave); font-size: .875rem; }

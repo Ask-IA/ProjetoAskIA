@@ -13,6 +13,28 @@ import { Component, computed, inject, input } from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
 import katex from 'katex';
 
+/**
+ * Conserta comandos LaTeX que o JSON "comeu" no caminho (bug visto em 10/11/2026: a IA mandou
+ * "\rightarrow" e a tela mostrou "ightarrow").
+ *
+ * A IA escreve LaTeX dentro de um JSON. Em JSON, "\r", "\t", "\f", "\b" e "\n" são escapes de
+ * caracteres de controle — então "\rightarrow" vira [retorno de carro] + "ightarrow", "\frac"
+ * vira [form feed] + "rac", "\times" vira [tab] + "imes", "\neq" vira [quebra de linha] + "eq".
+ * O JSON é válido, ninguém reclama, e a fórmula sai quebrada.
+ *
+ * Aqui o caractere de controle volta a ser "\" + letra — mas só quando vem colado numa letra,
+ * que é o formato de um comando LaTeX. Fórmula não tem tab nem form feed de verdade, então o
+ * risco de "consertar" algo que estava certo é praticamente nulo.
+ */
+export function restaurarBarrasDoJson(formula: string): string {
+  return formula
+    .replace(/\r(?=[a-zA-Z])/g, '\\r')
+    .replace(/\t(?=[a-zA-Z])/g, '\\t')
+    .replace(/\f(?=[a-zA-Z])/g, '\\f')
+    .replace(/\x08(?=[a-zA-Z])/g, '\\b')
+    .replace(/\n(?=[a-zA-Z])/g, '\\n');
+}
+
 @Component({
   selector: 'app-formula-matematica',
   standalone: true,
@@ -25,7 +47,7 @@ export class FormulaMatematica {
   readonly formula = input.required<string>();
 
   readonly html = computed(() => {
-    const bruto = this.formula();
+    const bruto = restaurarBarrasDoJson(this.formula());
     try {
       const renderizado = katex.renderToString(bruto, { throwOnError: false, displayMode: true });
       // Confiamos nesse HTML porque veio do KaTeX (ver comentário no topo do

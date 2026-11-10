@@ -93,6 +93,13 @@
   font-weight: 600;
 }
 
+/* Praticar tem 3 abas (Quiz IA, Flashcards, Redação): em 360 px, ícone + texto não cabem
+   nas três. Abaixo de 400 px fica só o texto, e o respiro lateral diminui. */
+@media (max-width: 399px) {
+  .abas-grupo a { padding: 8px 6px; gap: 0; min-width: 0; }
+  .abas-grupo app-icone { display: none; }
+}
+
 .abas-grupo a.ativa {
   border-color: var(--menu-ativo-texto);
   background: var(--menu-ativo-fundo);

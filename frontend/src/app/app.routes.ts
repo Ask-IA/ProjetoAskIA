@@ -50,6 +50,7 @@ export const routes: Routes = [
       { path: 'cronograma', loadComponent: () => import('./pages/cronograma/cronograma').then(m => m.Cronograma) },
       { path: 'flashcards', loadComponent: () => import('./pages/flashcards/flashcards').then(m => m.Flashcards) },
       { path: 'quiz',       loadComponent: () => import('./pages/quiz/quiz').then(m => m.Quiz) },
+      { path: 'redacao',    loadComponent: () => import('./pages/redacao/redacao').then(m => m.Redacao) },
       { path: 'progresso',  loadComponent: () => import('./pages/progresso/progresso').then(m => m.Progresso) },
     ],
   },

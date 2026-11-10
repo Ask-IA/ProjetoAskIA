@@ -83,12 +83,16 @@ public class GoogleGenAiTimeoutConfig {
 
 	/**
 	 * Timeout de rede (conexão + leitura da resposta) para cada chamada ao
-	 * Gemini, em milissegundos. 30s é bem acima do tempo normal de resposta do
-	 * modelo (segundos), mas bem abaixo dos 90s do nginx — sobra espaço pro
-	 * backend tentar de novo (spring.ai.retry.max-attempts=2) e ainda responder
-	 * dentro do limite do proxy.
+	 * Gemini, em milissegundos.
+	 *
+	 * Era 30s. Subiu para 80s em 10/11/2026: a correção de redação pede uma
+	 * resposta longa (5 competências com comentários) e o Gemini passou dos 30s
+	 * no primeiro teste real (GenAiIOException: timeout). Com o retry
+	 * (spring.ai.retry.max-attempts=2), o pior caso é 80s + 1s + 80s = 161s,
+	 * por isso o proxy_read_timeout do nginx subiu junto para 180s — senão o
+	 * nginx cortaria a conexão (504) enquanto a 2ª tentativa ainda roda.
 	 */
-	private static final int TIMEOUT_MS = 30_000;
+	private static final int TIMEOUT_MS = 80_000;
 
 	private final Environment environment;
 
