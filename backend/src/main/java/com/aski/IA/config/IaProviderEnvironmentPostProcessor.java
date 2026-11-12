@@ -1,5 +1,6 @@
 package com.aski.IA.config;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.boot.SpringApplication;
@@ -24,6 +25,14 @@ import org.springframework.core.env.MapPropertySource;
  * - Qualquer outro caso (só OpenAI, as duas, ou nenhuma) → usa OpenAI (comportamento de
  *   sempre, e o que já estava em produção antes do Gemini existir no projeto).
  *
+ * Provedores compatíveis com a API da OpenAI (ex.: Groq), adicionado em 10/11/2026:
+ * - OPENAI_BASE_URL preenchida → vira spring.ai.openai.base-url, e o starter da OpenAI passa a
+ *   falar com esse endereço. Groq: OPENAI_BASE_URL=https://api.groq.com/openai/v1, chave do
+ *   Groq em OPENAI_API_KEY e o modelo dele em OPENAI_MODEL (ex.: openai/gpt-oss-120b).
+ * - OPENAI_BASE_URL vazia/ausente → NADA é sobrescrito: vale o endereço padrão da OpenAI que o
+ *   próprio Spring AI define. Por isso a troca é feita aqui, e não com um valor padrão no
+ *   application.properties — assim não arriscamos escrever o endereço padrão da OpenAI errado.
+ *
  * Por que EnvironmentPostProcessor e não um @Bean/@Configuration comum: essa decisão precisa
  * estar pronta ANTES do Spring decidir quais autoconfigurações de IA vão rodar — depois disso
  * já é tarde. É o mesmo mecanismo que o Spring Boot usa pra ler o .env antes de tudo.
@@ -47,8 +56,16 @@ public class IaProviderEnvironmentPostProcessor implements EnvironmentPostProces
         // OpenAI continua sendo o padrão, pra não mudar o comportamento de quem já usava só OpenAI.
         String provedor = (temGemini && !temOpenai) ? "google-genai" : "openai";
 
+        Map<String, Object> propriedades = new HashMap<>();
+        propriedades.put(PROPRIEDADE_PROVEDOR, provedor);
+
+        String baseUrl = environment.getProperty("OPENAI_BASE_URL");
+        if (baseUrl != null && !baseUrl.isBlank()) {
+            propriedades.put("spring.ai.openai.base-url", baseUrl.trim());
+        }
+
         environment.getPropertySources().addFirst(
-                new MapPropertySource("ia-provider-autodetect", Map.of(PROPRIEDADE_PROVEDOR, provedor)));
+                new MapPropertySource("ia-provider-autodetect", propriedades));
     }
 
     @Override
